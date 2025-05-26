@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { useCakeBuilder } from "@/lib/cake-builder-store";
 import { apiRequest } from "@/lib/queryClient";
 
-export default function RunningCost() {
+// Accept pricingStructure as a prop
+export default function RunningCost({ pricingStructure }: { pricingStructure?: any }) {
   const { cakeConfig, currentStep } = useCakeBuilder();
 
   // Only show pricing from step 2 onwards
@@ -33,6 +34,13 @@ export default function RunningCost() {
   }
 
   const formatPrice = (price: number) => `RM ${(price / 100).toFixed(2)}`;
+
+  // Example: Use pricingStructure to show static info (e.g., base prices)
+  // You can expand this as needed for your UI
+  // if (pricingStructure) {
+  //   // Example: Show base prices somewhere
+  //   // pricingStructure.basePrices["6inch"]
+  // }
 
   return (
     <Card className="fixed bottom-4 left-4 right-4 shadow-lg border-primary/20 bg-white/95 backdrop-blur-sm z-30 max-w-lg mx-auto">
