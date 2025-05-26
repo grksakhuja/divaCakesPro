@@ -1,0 +1,46 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#f8fafc"/>
+  
+  <!-- Cake Stand -->
+  <ellipse cx="100" cy="180" rx="60" ry="8" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+  <ellipse cx="100" cy="178" rx="55" ry="6" fill="#f8fafc" opacity="0.8"/>
+  
+  <!-- Cake Base (Sponge) -->
+  <ellipse cx="100" cy="150" rx="50" ry="30" fill="#DEB887"/>
+  <ellipse cx="100" cy="145" rx="48" ry="28" fill="#D2B48C"/>
+  
+  <!-- Cake Texture -->
+  <circle cx="85" cy="140" r="1" fill="#CD853F" opacity="0.3"/>
+  <circle cx="110" cy="145" r="1" fill="#CD853F" opacity="0.3"/>
+  <circle cx="95" cy="155" r="1" fill="#CD853F" opacity="0.3"/>
+  <circle cx="115" cy="150" r="1" fill="#CD853F" opacity="0.3"/>
+  
+  <!-- Blue Icing Layer -->
+  <ellipse cx="100" cy="145" rx="50" ry="30" fill="#87CEEB"/>
+  <ellipse cx="100" cy="140" rx="48" ry="28" fill="#98D4F0"/>
+  
+  <!-- Icing Shine -->
+  <ellipse cx="85" cy="125" rx="15" ry="8" fill="#ffffff" opacity="0.4"/>
+  <ellipse cx="120" cy="135" rx="10" ry="5" fill="#ffffff" opacity="0.3"/>
+  
+  <!-- Icing Drips -->
+  <path d="M 70 165 Q 68 170 70 175" stroke="#7BC0E8" stroke-width="2" fill="none"/>
+  <path d="M 130 165 Q 132 170 130 175" stroke="#7BC0E8" stroke-width="2" fill="none"/>
+  <path d="M 100 170 Q 98 175 100 180" stroke="#7BC0E8" stroke-width="2" fill="none"/>
+  
+  <!-- Father's Day Message -->
+  <rect x="75" y="125" width="50" height="20" rx="10" fill="#ffffff" opacity="0.9" stroke="#e2e8f0"/>
+  <text x="100" y="138" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#2563eb">
+    👨‍👦 DAD
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="70" cy="115" r="3" fill="#FFD700" opacity="0.8"/>
+  <circle cx="130" cy="115" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="90" cy="105" r="2" fill="#4169E1" opacity="0.6"/>
+  <circle cx="110" cy="105" r="2" fill="#4169E1" opacity="0.6"/>
+  
+  <!-- Shadow under cake -->
+  <ellipse cx="100" cy="185" rx="45" ry="5" fill="#000000" opacity="0.1"/>
+</svg>

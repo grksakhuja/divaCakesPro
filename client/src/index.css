@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 336 84% 69%; /* #FF6B9D */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 36 100% 60%; /* #FFA726 */
+  --secondary-foreground: 0 0% 0%;
+  --accent: 120 50% 70%; /* #66BB6A */
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.75rem;
+  
+  /* Custom cake builder colors */
+  --cake-pink: 350 100% 88%; /* #FFB6C1 */
+  --cake-purple: 276 75% 84%; /* #DDA0DD */
+  --cake-blue: 197 71% 73%; /* #87CEEB */
+  --cake-green: 120 73% 75%; /* #98FB98 */
+  --cake-yellow: 54 77% 75%; /* #F0E68C */
+  --cake-orange: 16 100% 72%; /* #FFA07A */
+  --neutral-50: 0 0% 98%; /* #FAFAFA */
+  --neutral-500: 0 0% 46%; /* #757575 */
+  --neutral-900: 0 0% 20%; /* #333333 */
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 336 84% 69%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-neutral-50 text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer utilities {
+  .cake-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  }
+  
+  .cake-shadow {
+    box-shadow: 0 4px 20px rgba(255, 107, 157, 0.2);
+  }
+  
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Custom slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: hsl(var(--muted));
+  height: 12px;
+  border-radius: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.4);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  background: hsl(var(--muted));
+  height: 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(255, 107, 157, 0.4);
+  cursor: pointer;
+}
+
+/* Animation classes */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Touch friendly buttons */
+.btn-touch {
+  @apply touch-target p-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-primary to-primary/90 text-primary-foreground;
+}
+
+.btn-secondary {
+  @apply bg-white border-2 border-secondary text-neutral-900;
+}
+
+/* Selection states */
+.selected {
+  @apply border-primary bg-primary/10;
+}
+
+.selected::after {
+  content: "✓";
+  @apply absolute top-2 right-2 text-primary font-bold;
+}
+
+.selection-card {
+  @apply relative p-4 border-2 border-gray-200 rounded-xl hover:border-primary/50 transition-all duration-200 cursor-pointer;
+}
+
+.selection-card:hover {
+  @apply transform scale-105 shadow-md;
+}
