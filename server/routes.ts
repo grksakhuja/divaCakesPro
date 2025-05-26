@@ -4,6 +4,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCakeOrderSchema } from "@shared/schema";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -194,11 +196,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate pricing endpoint - COMPLETELY FIXED
+  // Calculate pricing endpoint - now reads from pricing-structure.json
   app.post("/api/calculate-price", async (req, res) => {
     try {
+      const pricingPath = path.join(__dirname, "./pricing-structure.json");
+      const pricing = JSON.parse(fs.readFileSync(pricingPath, "utf-8"));
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
-      
+
       // Special pricing for Father's Day template
       if (template === "fathers-day" || template === "999" || template === 999) {
         return res.json({
@@ -224,81 +228,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
       }
-      
+
       // Convert to numbers and ensure valid quantities
       const sixInch = Math.max(0, parseInt(String(sixInchCakes)) || 0);
       const eightInch = Math.max(0, parseInt(String(eightInchCakes)) || 0);
       const totalCakes = sixInch + eightInch;
-      
-      // Ensure we have at least one cake
       if (totalCakes === 0) {
         return res.status(400).json({ message: "Must select at least one cake" });
       }
-      
-      // CORE FIX: Base pricing - 6-inch = RM 80 (8000 cents), 8-inch = RM 155 (15500 cents)
-      const basePrice = (sixInch * 8000) + (eightInch * 15500);
-      
+
+      // Base pricing
+      const basePrice = (sixInch * pricing.basePrices["6inch"]) + (eightInch * pricing.basePrices["8inch"]);
+
       // Layer pricing (additional layers for each cake)
-      const layerPrice = Math.max(0, layers - 1) * 1500 * totalCakes;
-      
+      const layerPrice = Math.max(0, layers - 1) * pricing.layerPrice * totalCakes;
+
       // Flavor pricing
       let flavorPrice = 0;
       if (Array.isArray(flavors)) {
         flavors.forEach((flavor) => {
-          if (flavor === 'chocolate') flavorPrice += 2000;
-          else if (flavor?.includes('poppyseed')) flavorPrice += 500;
+          const key = String(flavor).replace(/\s+/g, '-').toLowerCase();
+          flavorPrice += pricing.flavorPrices[key] || 0;
         });
       }
       flavorPrice *= totalCakes;
-      
-      // Shape pricing  
-      let shapePrice = 0;
-      if (shape === 'heart') {
-        shapePrice = 1800 * totalCakes;
-      }
-      
+
+      // Shape pricing
+      let shapePrice = pricing.shapePrices[shape] || 0;
+      shapePrice *= totalCakes;
+
       // Decoration pricing
-      const decorationPrices = {
-        sprinkles: 500,
-        flowers: 2000,
-        fruit: 1200,
-        gold: 1500,
-        'happy-birthday': 700,
-        'anniversary': 700,
-      };
-      
       let decorationTotal = 0;
       if (Array.isArray(decorations)) {
         decorations.forEach((decoration) => {
-          decorationTotal += decorationPrices[decoration] || 0;
+          const key = String(decoration).replace(/\s+/g, '-').toLowerCase();
+          decorationTotal += pricing.decorationPrices[key] || 0;
         });
       }
       decorationTotal *= totalCakes;
-      
+
       // Icing type pricing
-      const icingPrices = {
-        butter: 0,
-        whipped: 1000,
-        fondant: 1000,
-        chocolate: 2000,
-      };
-      
-      const icingPrice = (icingPrices[icingType] || 0) * totalCakes;
-      
+      const icingKey = String(icingType).replace(/\s+/g, '-').toLowerCase();
+      const icingPrice = (pricing.icingTypes[icingKey] || 0) * totalCakes;
+
       // Dietary restrictions upcharge
       let dietaryUpcharge = 0;
       if (Array.isArray(dietaryRestrictions)) {
         dietaryRestrictions.forEach((restriction) => {
-          if (restriction === 'eggless') dietaryUpcharge += 1000;
-          else if (restriction === 'vegan') dietaryUpcharge += 3500;
-          else if (restriction === 'halal') dietaryUpcharge += 500;
+          const key = String(restriction).replace(/\s+/g, '-').toLowerCase();
+          dietaryUpcharge += pricing.dietaryPrices[key] || 0;
         });
       }
       dietaryUpcharge *= totalCakes;
-      
+
       const photoPrice = 0;
       const totalPrice = basePrice + layerPrice + flavorPrice + shapePrice + decorationTotal + icingPrice + dietaryUpcharge + photoPrice;
-      
+
       res.json({
         basePrice,
         layerPrice,
@@ -324,6 +309,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Pricing calculation error:", error);
       res.status(500).json({ message: "Failed to calculate price" });
+    }
+  });
+
+  // Serve pricing structure for frontend
+  app.get("/api/pricing-structure", (req, res) => {
+    const pricingPath = path.join(__dirname, "./pricing-structure.json");
+    try {
+      const data = fs.readFileSync(pricingPath, "utf-8");
+      res.json(JSON.parse(data));
+    } catch (err) {
+      res.status(500).json({ message: "Could not load pricing structure" });
     }
   });
 

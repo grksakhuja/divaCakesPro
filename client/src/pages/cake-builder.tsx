@@ -85,6 +85,15 @@ export default function CakeBuilder() {
     enabled: currentStep >= 2,
   });
 
+  // Fetch pricing structure
+  const { data: pricingStructure } = useQuery({
+    queryKey: ["/api/pricing-structure"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/pricing-structure", "GET");
+      return response.json();
+    },
+  });
+
   // Create order mutation
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
@@ -218,7 +227,7 @@ export default function CakeBuilder() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <ProgressIndicator />
-      <RunningCost />
+      <RunningCost pricingStructure={pricingStructure} />
       
       <div className="pt-20 pb-32">
         <div className="max-w-lg mx-auto px-4">
@@ -623,10 +632,6 @@ export default function CakeBuilder() {
                   </CardContent>
                 </Card>
 
-
-
-
-
                 <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
                   Continue to Dietary Options
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -888,8 +893,6 @@ export default function CakeBuilder() {
                     </CardContent>
                   </Card>
                 )}
-
-
 
                 <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
                   Review & Order
