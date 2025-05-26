@@ -8,10 +8,9 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "build-client": "cd client && npm install && npm run build",
-    "copy-client": "rm -rf server/public && mkdir -p server/public && cp -r client/dist/* server/public/",
+    "build-client": "cd client && npm install && vite build",
     "build-server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "build": "npm run build-client && npm run copy-client && npm run build-server",
+    "build": "npm run build-client && npm run build-server",
     "prod": "NODE_ENV=production tsx server/index.ts"
   },
   "dependencies": {

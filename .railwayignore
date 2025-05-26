@@ -1,0 +1,3 @@
+# Ignore macOS sockets / accidental home-dir links
+/Users/rohitsakhuja/.config/
+*.socket
