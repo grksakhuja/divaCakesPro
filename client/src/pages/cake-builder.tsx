@@ -40,10 +40,13 @@ import {
   COLOR_PALETTE, 
   DIETARY_OPTIONS,
   DIETARY_NOTE,
+  getDecorationOptionsWithPricing,
   type CakeConfig 
 } from "@/types/cake";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import ImprovedButtonGrid from "@/components/ui/improved-button-grid";
+import ImprovedSelectionCard from "@/components/ui/improved-selection-card";
 
 export default function CakeBuilder() {
   const { 
@@ -266,44 +269,54 @@ export default function CakeBuilder() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Base Size Selection */}
+                  {/* Base Size Selection - IMPROVED with component */}
                   <div className="space-y-3">
                     <h3 className="text-lg font-semibold text-neutral-800">Choose Your Base Size</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        className="btn-touch btn-primary h-auto py-4 flex-col space-y-2"
-                        onClick={() => {
-                          updateConfig({ servings: 6 });
-                          nextStep();
-                        }}
-                      >
-                        <div className="text-lg font-bold">6-inch</div>
-                        <div className="text-sm opacity-90">5-7 servings</div>
-                        <div className="text-xs font-semibold">
-                          {pricingStructure?.basePrices?.['6inch'] 
-                            ? `RM ${(pricingStructure.basePrices['6inch'] / 100).toFixed(0)}`
-                            : 'RM 100'
-                          }
-                        </div>
-                      </Button>
-                      
-                      <Button 
-                        className="btn-touch btn-primary h-auto py-4 flex-col space-y-2"
-                        onClick={() => {
-                          updateConfig({ servings: 8 });
-                          nextStep();
-                        }}
-                      >
-                        <div className="text-lg font-bold">8-inch</div>
-                        <div className="text-sm opacity-90">10-13 servings</div>
-                        <div className="text-xs font-semibold">
-                          {pricingStructure?.basePrices?.['8inch'] 
-                            ? `RM ${(pricingStructure.basePrices['8inch'] / 100).toFixed(0)}`
-                            : 'RM 155'
-                          }
-                        </div>
-                      </Button>
-                    </div>
+                    <ImprovedButtonGrid
+                      items={[
+                        {
+                          id: "6inch",
+                          onClick: () => {
+                            updateConfig({ servings: 6 });
+                            nextStep();
+                          },
+                          className: "btn-touch btn-primary",
+                          children: (
+                            <>
+                              <div className="text-lg font-bold">6-inch</div>
+                              <div className="text-sm opacity-90">5-7 servings</div>
+                              <div className="text-xs font-semibold">
+                                {pricingStructure?.basePrices?.['6inch'] 
+                                  ? `RM ${(pricingStructure.basePrices['6inch'] / 100).toFixed(0)}`
+                                  : 'RM 90'
+                                }
+                              </div>
+                            </>
+                          )
+                        },
+                        {
+                          id: "8inch",
+                          onClick: () => {
+                            updateConfig({ servings: 8 });
+                            nextStep();
+                          },
+                          className: "btn-touch btn-primary",
+                          children: (
+                            <>
+                              <div className="text-lg font-bold">8-inch</div>
+                              <div className="text-sm opacity-90">10-13 servings</div>
+                              <div className="text-xs font-semibold">
+                                {pricingStructure?.basePrices?.['8inch'] 
+                                  ? `RM ${(pricingStructure.basePrices['8inch'] / 100).toFixed(0)}`
+                                  : 'RM 160'
+                                }
+                              </div>
+                            </>
+                          )
+                        }
+                      ]}
+                      columns={2}
+                    />
                   </div>
                   
                   <Separator />
@@ -335,7 +348,6 @@ export default function CakeBuilder() {
                     variant="outline"
                     className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
                     onClick={() => {
-                      // Create Father's Day template directly
                       const fathersTemplate = {
                         id: 999,
                         name: "Father's Day Special",
@@ -346,10 +358,10 @@ export default function CakeBuilder() {
                         icingColor: "#87CEEB",
                         icingType: "butter",
                         decorations: [],
-                        basePrice: pricingStructure?.basePrices?.['6inch'] || 8000, // Dynamic price for Father's Day special
-                        servings: 6, // Fixed at 6 servings
-                        sixInchCakes: 1, // Set to 1 six-inch cake
-                        eightInchCakes: 0, // No eight-inch cakes
+                        basePrice: pricingStructure?.basePrices?.['6inch'] || 8000,
+                        servings: 6,
+                        sixInchCakes: 1,
+                        eightInchCakes: 0,
                       };
                       handleTemplateSelect(fathersTemplate);
                     }}
@@ -374,15 +386,8 @@ export default function CakeBuilder() {
                     {templatesError && (
                       <div className="text-center py-8">
                         <p className="text-red-600 text-sm">Failed to load templates</p>
-                        <p className="text-xs text-neutral-500 mt-1">
-                          Error: {templatesError.message}
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                          onClick={() => window.location.reload()}
-                        >
+                        <p className="text-xs text-neutral-500 mt-1">Error: {templatesError.message}</p>
+                        <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.reload()}>
                           Retry
                         </Button>
                       </div>
@@ -402,9 +407,7 @@ export default function CakeBuilder() {
                                 alt={template.name}
                                 className="w-full h-20 object-cover rounded-lg mb-2"
                               />
-                              <h3 className="font-semibold text-center text-sm">
-                                {template.name}
-                              </h3>
+                              <h3 className="font-semibold text-center text-sm">{template.name}</h3>
                             </CardContent>
                           </Card>
                         ))}
@@ -414,9 +417,7 @@ export default function CakeBuilder() {
                     {!templatesLoading && !templatesError && (!templates || !Array.isArray(templates) || templates.length === 0) && (
                       <div className="text-center py-8">
                         <p className="text-neutral-500 text-sm">No templates available</p>
-                        <p className="text-xs text-neutral-400 mt-1">
-                          Templates data: {JSON.stringify(templates)}
-                        </p>
+                        <p className="text-xs text-neutral-400 mt-1">Templates data: {JSON.stringify(templates)}</p>
                       </div>
                     )}
                   </motion.div>
@@ -509,7 +510,7 @@ export default function CakeBuilder() {
               </motion.div>
             )}
 
-            {/* Step 3: Flavor Selection */}
+            {/* Step 3: Flavors - IMPROVED but keeping ALL functionality */}
             {currentStep === 3 && (
               <motion.div
                 key="flavors"
@@ -528,34 +529,18 @@ export default function CakeBuilder() {
                 </div>
 
                 {Array.from({ length: cakeConfig.layers }, (_, layerIndex) => (
-                  <Card key={layerIndex}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold">
-                          Layer {layerIndex + 1} 
-                          {layerIndex === 0 && " (Bottom)"}
-                          {layerIndex === cakeConfig.layers - 1 && " (Top)"}
-                        </h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        {FLAVOR_OPTIONS.map((flavor) => (
-                          <Button
-                            key={flavor.id}
-                            variant={cakeConfig.flavors[layerIndex] === flavor.id ? "default" : "outline"}
-                            className="h-auto p-3 flex-col"
-                            onClick={() => handleFlavorChange(layerIndex, flavor.id)}
-                          >
-                            <img 
-                              src={flavor.image} 
-                              alt={flavor.name}
-                              className="w-full h-12 object-cover rounded mb-2"
-                            />
-                            <span className="text-sm font-medium">{flavor.name}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ImprovedSelectionCard
+                    key={layerIndex}
+                    title={cakeConfig.layers === 1 
+                      ? "Cake Flavor" 
+                      : `Layer ${layerIndex + 1}${layerIndex === 0 ? " (Bottom)" : layerIndex === cakeConfig.layers - 1 ? " (Top)" : ""}`
+                    }
+                    items={FLAVOR_OPTIONS}
+                    selectedItems={cakeConfig.flavors[layerIndex]}
+                    onSelectionChange={(flavorId) => handleFlavorChange(layerIndex, flavorId)}
+                    multiple={false}
+                    columns={2}
+                  />
                 ))}
 
                 <Button className="w-full btn-touch btn-primary mb-32" onClick={nextStep}>
@@ -565,7 +550,7 @@ export default function CakeBuilder() {
               </motion.div>
             )}
 
-            {/* Step 4: Icing & Decorations */}
+            {/* Step 4: Icing & Decorations - IMPROVED */}
             {currentStep === 4 && (
               <motion.div
                 key="icing"
@@ -596,60 +581,30 @@ export default function CakeBuilder() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4">Icing Type</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { id: "butter", name: "Butter", icon: "🧈" },
-                        { id: "whipped", name: "Whipped", icon: "☁️" },
-                        { id: "chocolate", name: "Chocolate (Premium)", icon: "🍫" },
-                        { id: "fondant", name: "Fondant (Premium)", icon: "✨" },
-                      ].map((icing) => (
-                        <Button
-                          key={icing.id}
-                          variant={cakeConfig.icingType === icing.id ? "default" : "outline"}
-                          className="h-16 flex-col"
-                          onClick={() => updateConfig({ icingType: icing.id as any })}
-                        >
-                          <span className="text-2xl mb-1">{icing.icon}</span>
-                          <span className="text-sm">{icing.name}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Icing Type - IMPROVED */}
+                <ImprovedSelectionCard
+                  title="Icing Type"
+                  items={[
+                    { id: "butter", name: "Butter", icon: "🧈" },
+                    { id: "whipped", name: "Whipped", icon: "☁️" },
+                    { id: "chocolate", name: "Chocolate (Premium)", icon: "🍫", premium: true },
+                    { id: "fondant", name: "Fondant (Premium)", icon: "✨", premium: true },
+                  ]}
+                  selectedItems={cakeConfig.icingType}
+                  onSelectionChange={(icingType) => updateConfig({ icingType: icingType as any })}
+                  multiple={false}
+                  columns={2}
+                />
 
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4">Add Decorations</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {DECORATION_OPTIONS.map((decoration) => (
-                        <Button
-                          key={decoration.id}
-                          variant={cakeConfig.decorations.includes(decoration.id) ? "default" : "outline"}
-                          className="h-auto p-3 flex-col relative"
-                          onClick={() => handleDecorationToggle(decoration.id)}
-                        >
-                          <img 
-                            src={decoration.image} 
-                            alt={decoration.name}
-                            className="w-full h-12 object-cover rounded mb-2"
-                          />
-                          <span className="text-sm font-medium">{decoration.name}</span>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            +RM {(decoration.price / 100).toFixed(2)}
-                          </Badge>
-                          {cakeConfig.decorations.includes(decoration.id) && (
-                            <div className="absolute top-2 right-2">
-                              <Check className="h-4 w-4 text-green-600" />
-                            </div>
-                          )}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Decorations - Updated to use dynamic pricing */}
+                <ImprovedSelectionCard
+                  title="Add Decorations"
+                  items={getDecorationOptionsWithPricing(pricingStructure)}
+                  selectedItems={cakeConfig.decorations}
+                  onSelectionChange={handleDecorationToggle}
+                  multiple={true}
+                  columns={2}
+                />
 
                 <Button className="w-full btn-touch btn-primary mb-32" onClick={nextStep}>
                   Continue to Message
