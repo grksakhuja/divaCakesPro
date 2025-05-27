@@ -347,6 +347,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a specific order (admin only)
+  app.delete("/api/orders/:id", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const session = activeSessions.get(sessionToken as string);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      
+      // Check if session is expired
+      if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
+        activeSessions.delete(sessionToken as string);
+        return res.status(401).json({ message: "Session expired" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      console.log(`🗑️ Admin ${session.username} deleting order #${id}`);
+      const deleted = await storage.deleteCakeOrder(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      console.log(`✅ Successfully deleted order #${id}`);
+      res.json({ message: "Order deleted successfully", orderId: id });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ message: "Failed to delete order" });
+    }
+  });
+
+  // Delete ALL orders (admin only)
+  app.delete("/api/orders", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const session = activeSessions.get(sessionToken as string);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      
+      console.log("🗑️ Admin deleting all orders - user:", session.username);
+      const deletedCount = await storage.deleteAllCakeOrders();
+      
+      res.json({ 
+        message: `Successfully deleted ${deletedCount} orders`,
+        deletedCount 
+      });
+    } catch (error) {
+      console.error("Error deleting all orders:", error);
+      res.status(500).json({ message: "Failed to delete orders" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
