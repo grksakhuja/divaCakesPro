@@ -42,8 +42,15 @@ function calculateExpectedPricing(requestData) {
 
   // Special pricing for Father's Day template
   if (template === "fathers-day" || template === "fathers day") {
-    const basePrice = pricingStructure.basePrices["6inch"]; // Base 6-inch price
-    const templatePrice = pricingStructure.templatePrices["fathers-day"] || 0; // Template markup
+    const totalCakes = sixInchCakes + eightInchCakes;
+    
+    // Calculate base price for each size
+    const basePrice = (sixInchCakes * pricingStructure.basePrices["6inch"]) + 
+                      (eightInchCakes * pricingStructure.basePrices["8inch"]);
+    
+    // Template price per cake
+    const templatePrice = totalCakes * (pricingStructure.templatePrices["fathers-day"] || 0);
+    
     const totalPrice = basePrice + templatePrice;
     
     return {

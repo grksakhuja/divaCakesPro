@@ -938,7 +938,7 @@ export default function CakeBuilder() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const newCount = Math.max(0, (cakeConfig.sixInchCakes || 1) - 1);
+                            const newCount = Math.max(0, (cakeConfig.sixInchCakes || 0) - 1);
                             updateConfig({ 
                               sixInchCakes: newCount,
                               servings: newCount * 6 + (cakeConfig.eightInchCakes || 0) * 8
@@ -950,10 +950,10 @@ export default function CakeBuilder() {
                         
                         <div className="flex-1">
                           <div className="text-center text-lg font-semibold mb-2">
-                            {cakeConfig.sixInchCakes || 1} cakes
+                            {cakeConfig.sixInchCakes || 0} cakes
                           </div>
                           <Slider
-                            value={[cakeConfig.sixInchCakes || 1]}
+                            value={[cakeConfig.sixInchCakes || 0]}
                             onValueChange={([value]) => {
                               updateConfig({ 
                                 sixInchCakes: value,
@@ -971,7 +971,7 @@ export default function CakeBuilder() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const newCount = Math.min(5, (cakeConfig.sixInchCakes || 1) + 1);
+                            const newCount = Math.min(5, (cakeConfig.sixInchCakes || 0) + 1);
                             updateConfig({ 
                               sixInchCakes: newCount,
                               servings: newCount * 6 + (cakeConfig.eightInchCakes || 0) * 8
@@ -1001,7 +1001,7 @@ export default function CakeBuilder() {
                             const newCount = Math.max(0, (cakeConfig.eightInchCakes || 0) - 1);
                             updateConfig({ 
                               eightInchCakes: newCount,
-                              servings: (cakeConfig.sixInchCakes || 1) * 6 + newCount * 8
+                              servings: (cakeConfig.sixInchCakes || 0) * 6 + newCount * 8
                             });
                           }}
                         >
@@ -1017,7 +1017,7 @@ export default function CakeBuilder() {
                             onValueChange={([value]) => {
                               updateConfig({ 
                                 eightInchCakes: value,
-                                servings: (cakeConfig.sixInchCakes || 1) * 6 + value * 8
+                                servings: (cakeConfig.sixInchCakes || 0) * 6 + value * 8
                               });
                             }}
                             max={3}
@@ -1034,7 +1034,7 @@ export default function CakeBuilder() {
                             const newCount = Math.min(3, (cakeConfig.eightInchCakes || 0) + 1);
                             updateConfig({ 
                               eightInchCakes: newCount,
-                              servings: (cakeConfig.sixInchCakes || 1) * 6 + newCount * 8
+                              servings: (cakeConfig.sixInchCakes || 0) * 6 + newCount * 8
                             });
                           }}
                         >
@@ -1049,7 +1049,7 @@ export default function CakeBuilder() {
                         {cakeConfig.servings} Total Servings
                       </div>
                       <div className="text-sm text-gray-600">
-                        {cakeConfig.sixInchCakes || 1} × 6-inch + {cakeConfig.eightInchCakes || 0} × 8-inch cakes
+                        {cakeConfig.sixInchCakes || 0} × 6-inch + {cakeConfig.eightInchCakes || 0} × 8-inch cakes
                       </div>
                     </div>
                   </CardContent>

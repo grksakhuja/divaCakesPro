@@ -244,13 +244,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
 
-      // Special pricing for Father's Day template
+      // Special pricing for Father's Day template - Base price + template price
       if (template === "fathers-day" || template === "999" || template === 999) {
         // Get fresh pricing structure for Father's Day template
         const pricingStructure = getPricingStructure();
-        const basePrice = pricingStructure.basePrices["6inch"]; // Base 6-inch price
-        const templatePrice = pricingStructure.templatePrices["fathers-day"] || 0; // Template markup
-        const fathersDayTotalPrice = basePrice + templatePrice; // Base + template pricing
+        
+        // Convert to numbers and ensure valid quantities for Father's Day
+        const sixInch = Math.max(0, parseInt(String(sixInchCakes)) || 0);
+        const eightInch = Math.max(0, parseInt(String(eightInchCakes)) || 0);
+        const totalCakes = sixInch + eightInch;
+        
+        // Require at least one cake to be selected
+        if (totalCakes === 0) {
+          return res.status(400).json({ message: "Must select at least one cake for Father's Day special" });
+        }
+        
+        // Calculate base price for all cakes (using standard pricing)
+        const basePrice = (sixInch * pricingStructure.basePrices["6inch"]) + (eightInch * pricingStructure.basePrices["8inch"]);
+        
+        // Father's Day template price (from pricing structure)
+        const templatePrice = (pricingStructure.templatePrices["fathers-day"] || 1000) * totalCakes;
+        
+        // Total price is base + template price
+        const totalPrice = basePrice + templatePrice;
         
         return res.json({
           basePrice: basePrice,
@@ -262,8 +278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           icingPrice: 0,
           dietaryUpcharge: 0,
           photoPrice: 0,
-          cakeQuantity: 1,
-          totalPrice: fathersDayTotalPrice,
+          cakeQuantity: totalCakes,
+          totalPrice: totalPrice,
           breakdown: {
             base: basePrice,
             template: templatePrice,
