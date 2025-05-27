@@ -60,9 +60,17 @@ export default function CakeBuilder() {
   const [showTemplates, setShowTemplates] = useState(false);
 
   // Fetch templates
-  const { data: templates } = useQuery({
+  const { data: templates, isLoading: templatesLoading, error: templatesError } = useQuery({
     queryKey: ["/api/templates"],
   });
+
+  // Debug logging for templates
+  useEffect(() => {
+    console.log("Templates data:", templates);
+    console.log("Templates loading:", templatesLoading);
+    console.log("Templates error:", templatesError);
+    console.log("Show templates state:", showTemplates);
+  }, [templates, templatesLoading, templatesError, showTemplates]);
 
   // Price calculation
   const { data: pricing, refetch: recalculatePrice } = useQuery({
@@ -298,9 +306,19 @@ export default function CakeBuilder() {
                     variant="outline"
                     className="w-full btn-touch btn-secondary"
                     onClick={() => setShowTemplates(!showTemplates)}
+                    disabled={templatesLoading}
                   >
                     <Star className="mr-3 h-5 w-5" />
-                    Choose a Template
+                    {templatesLoading ? (
+                      <>
+                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        Loading Templates...
+                      </>
+                    ) : templatesError ? (
+                      <>Error Loading Templates</>
+                    ) : (
+                      <>Choose a Template {Array.isArray(templates) ? `(${templates.length})` : ''}</>
+                    )}
                   </Button>
 
                   <Button 
@@ -330,30 +348,67 @@ export default function CakeBuilder() {
                   </Button>
                 </div>
 
-                {showTemplates && Array.isArray(templates) && (
+                {showTemplates && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
-                    className="grid grid-cols-2 gap-4 mt-6"
+                    className="mt-6"
                   >
-                    {templates.map((template: any) => (
-                      <Card 
-                        key={template.id}
-                        className="cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => handleTemplateSelect(template)}
-                      >
-                        <CardContent className="p-4">
-                          <img 
-                            src={`https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=120`}
-                            alt={template.name}
-                            className="w-full h-20 object-cover rounded-lg mb-2"
-                          />
-                          <h3 className="font-semibold text-center text-sm">
-                            {template.name}
-                          </h3>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {templatesLoading && (
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <p className="mt-2 text-sm text-neutral-500">Loading templates...</p>
+                      </div>
+                    )}
+                    
+                    {templatesError && (
+                      <div className="text-center py-8">
+                        <p className="text-red-600 text-sm">Failed to load templates</p>
+                        <p className="text-xs text-neutral-500 mt-1">
+                          Error: {templatesError.message}
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2"
+                          onClick={() => window.location.reload()}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {!templatesLoading && !templatesError && Array.isArray(templates) && templates.length > 0 && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {templates.map((template: any) => (
+                          <Card 
+                            key={template.id}
+                            className="cursor-pointer hover:shadow-lg transition-shadow"
+                            onClick={() => handleTemplateSelect(template)}
+                          >
+                            <CardContent className="p-4">
+                              <img 
+                                src={`https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=120`}
+                                alt={template.name}
+                                className="w-full h-20 object-cover rounded-lg mb-2"
+                              />
+                              <h3 className="font-semibold text-center text-sm">
+                                {template.name}
+                              </h3>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {!templatesLoading && !templatesError && (!templates || !Array.isArray(templates) || templates.length === 0) && (
+                      <div className="text-center py-8">
+                        <p className="text-neutral-500 text-sm">No templates available</p>
+                        <p className="text-xs text-neutral-400 mt-1">
+                          Templates data: {JSON.stringify(templates)}
+                        </p>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </motion.div>
