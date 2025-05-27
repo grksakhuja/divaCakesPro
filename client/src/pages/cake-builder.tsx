@@ -279,7 +279,12 @@ export default function CakeBuilder() {
                       >
                         <div className="text-lg font-bold">6-inch</div>
                         <div className="text-sm opacity-90">5-7 servings</div>
-                        <div className="text-xs font-semibold">RM 80</div>
+                        <div className="text-xs font-semibold">
+                          {pricingStructure?.basePrices?.['6inch'] 
+                            ? `RM ${(pricingStructure.basePrices['6inch'] / 100).toFixed(0)}`
+                            : 'RM 100'
+                          }
+                        </div>
                       </Button>
                       
                       <Button 
@@ -291,7 +296,12 @@ export default function CakeBuilder() {
                       >
                         <div className="text-lg font-bold">8-inch</div>
                         <div className="text-sm opacity-90">10-13 servings</div>
-                        <div className="text-xs font-semibold">RM 155</div>
+                        <div className="text-xs font-semibold">
+                          {pricingStructure?.basePrices?.['8inch'] 
+                            ? `RM ${(pricingStructure.basePrices['8inch'] / 100).toFixed(0)}`
+                            : 'RM 155'
+                          }
+                        </div>
                       </Button>
                     </div>
                   </div>
@@ -336,7 +346,7 @@ export default function CakeBuilder() {
                         icingColor: "#87CEEB",
                         icingType: "butter",
                         decorations: [],
-                        basePrice: 8000, // RM 80 fixed price for Father's Day special
+                        basePrice: pricingStructure?.basePrices?.['6inch'] || 8000, // Dynamic price for Father's Day special
                         servings: 6, // Fixed at 6 servings
                         sixInchCakes: 1, // Set to 1 six-inch cake
                         eightInchCakes: 0, // No eight-inch cakes
@@ -810,7 +820,11 @@ export default function CakeBuilder() {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between items-center">
                         <Label className="text-base font-medium">6-inch Cakes (5-7 servings each)</Label>
-                        <div className="text-sm text-gray-500">RM 80 each</div>
+                        <div className="text-sm text-gray-500">
+                          {pricingStructure?.basePrices?.['6inch'] 
+                            ? `RM ${(pricingStructure.basePrices['6inch'] / 100).toFixed(0)} each`
+                            : 'RM 100 each'}
+                        </div>
                       </div>
                       <div className="flex items-center space-x-4">
                         <Button
@@ -866,7 +880,11 @@ export default function CakeBuilder() {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between items-center">
                         <Label className="text-base font-medium">8-inch Cakes (10-13 servings each)</Label>
-                        <div className="text-sm text-gray-500">RM 155 each</div>
+                        <div className="text-sm text-gray-500">
+                          {pricingStructure?.basePrices?.['8inch'] 
+                            ? `RM ${(pricingStructure.basePrices['8inch'] / 100).toFixed(0)} each`
+                            : 'RM 155 each'}
+                        </div>
                       </div>
                       <div className="flex items-center space-x-4">
                         <Button

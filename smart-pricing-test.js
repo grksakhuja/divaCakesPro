@@ -66,7 +66,7 @@ async function runSmartPricingTests() {
       }
     },
     {
-      name: "Father's Day template (should be 8000 cents flat)",
+      name: "Father's Day template (should be base + template price)",
       data: {
         template: "fathers-day",
         sixInchCakes: 1,

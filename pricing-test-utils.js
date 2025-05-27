@@ -42,15 +42,20 @@ function calculateExpectedPricing(requestData) {
 
   // Special pricing for Father's Day template
   if (template === "fathers-day" || template === "fathers day") {
+    const basePrice = pricingStructure.basePrices["6inch"]; // Base 6-inch price
+    const templatePrice = pricingStructure.templatePrices["fathers-day"] || 0; // Template markup
+    const totalPrice = basePrice + templatePrice;
+    
     return {
-      basePrice: 8000,
+      basePrice: basePrice,
+      templatePrice: templatePrice,
       layerPrice: 0,
       flavorPrice: 0,
       shapePrice: 0,
       icingPrice: 0,
       decorationTotal: 0,
       dietaryUpcharge: 0,
-      totalPrice: 8000
+      totalPrice: totalPrice
     };
   }
 
@@ -177,30 +182,17 @@ export function printTestResults(result) {
     console.log(`   Actual:   ${result.actualPrice} cents ✓`);
   } else {
     console.log(`   Expected: ${result.expectedPrice} cents`);
-    console.log(`   Actual:   ${result.actualPrice} cents`);
+    console.log(`   Actual:   ${result.actualPrice !== null ? result.actualPrice + ' cents' : 'ERROR'} ❌`);
     
     if (result.error) {
       console.log(`   Error:    ${result.error}`);
     }
     
-    // Show expected pricing breakdown for debugging
-    if (result.expectedPricing) {
-      console.log(`   Expected breakdown:`);
-      console.log(`     Base price: ${result.expectedPricing.basePrice}`);
-      console.log(`     Layer price: ${result.expectedPricing.layerPrice}`);
-      console.log(`     Flavor price: ${result.expectedPricing.flavorPrice}`);
-      console.log(`     Shape price: ${result.expectedPricing.shapePrice}`);
-      console.log(`     Icing price: ${result.expectedPricing.icingPrice}`);
-      console.log(`     Decoration total: ${result.expectedPricing.decorationTotal}`);
-      console.log(`     Dietary upcharge: ${result.expectedPricing.dietaryUpcharge}`);
-    }
-    
-    if (result.serverResponse) {
-      console.log(`   Server response:`, JSON.stringify(result.serverResponse, null, 2));
+    if (result.expectedPricing && result.serverResponse) {
+      console.log(`   Expected breakdown:`, result.expectedPricing);
+      console.log(`   Server response:`, result.serverResponse);
     }
   }
   
-  console.log(); // Empty line for spacing
+  console.log(''); // Empty line for readability
 }
-
-export { calculateExpectedPricing }; 
