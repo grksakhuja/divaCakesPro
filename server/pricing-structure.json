@@ -5,8 +5,8 @@
   },
   "layerPrice": 1500,
   "flavorPrices": {
-    "chocolate": 0,
     "butter": 0,
+    "chocolate": 0,
     "orange": 0,
     "lemon": 0,
     "orange-poppyseed": 500,
@@ -16,6 +16,7 @@
     "butter": 0,
     "buttercream": 1000,
     "whipped": 1000,
+    "chocolate": 1000,
     "fondant": 1000
   },
   "decorationPrices": {
