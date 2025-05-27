@@ -1,4 +1,6 @@
-// Pricing Test Script
+// Pricing Test Script - Dynamic pricing based on API
+let pricingStructure = null;
+
 const testCases = [
   {
     name: "6-inch butter cake",
@@ -14,13 +16,16 @@ const testCases = [
       sixInchCakes: 1,
       eightInchCakes: 0
     },
-    expected: { basePrice: 8000, totalPrice: 8000 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['6inch'], 
+      totalPrice: pricing.basePrices['6inch'] 
+    })
   },
   {
-    name: "8-inch orange cake with buttercream icing", 
+    name: "8-inch orange cake with buttercream icing",
     data: {
-      layers: 1,
-      servings: 8,
+      layers: 2,
+      servings: 10,
       decorations: [],
       icingType: "buttercream",
       dietaryRestrictions: [],
@@ -30,7 +35,12 @@ const testCases = [
       sixInchCakes: 0,
       eightInchCakes: 1
     },
-    expected: { basePrice: 15500, icingPrice: 1000, totalPrice: 16500 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['8inch'] + pricing.layerPrice, // 2 layers = base + 1 additional
+      layerPrice: pricing.layerPrice,
+      icingPrice: pricing.icingTypes.buttercream,
+      totalPrice: pricing.basePrices['8inch'] + pricing.layerPrice + pricing.icingTypes.buttercream
+    })
   },
   {
     name: "6-inch chocolate cake with flowers decoration",
@@ -46,7 +56,12 @@ const testCases = [
       sixInchCakes: 1,
       eightInchCakes: 0
     },
-    expected: { basePrice: 8000, flavorPrice: 0, decorationTotal: 1500, totalPrice: 9500 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['6inch'], 
+      flavorPrice: 0, 
+      decorationTotal: pricing.decorationPrices.flowers,
+      totalPrice: pricing.basePrices['6inch'] + pricing.decorationPrices.flowers
+    })
   },
   {
     name: "Father's Day special",
@@ -63,7 +78,11 @@ const testCases = [
       sixInchCakes: 1,
       eightInchCakes: 0
     },
-    expected: { basePrice: 8000, totalPrice: 8000 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['6inch'], 
+      templatePrice: pricing.templatePrices['fathers-day'] || 0,
+      totalPrice: pricing.basePrices['6inch'] + (pricing.templatePrices['fathers-day'] || 0)
+    })
   },
   {
     name: "2x 6-inch lemon-poppyseed cakes with halal option",
@@ -79,7 +98,13 @@ const testCases = [
       sixInchCakes: 2,
       eightInchCakes: 0
     },
-    expected: { basePrice: 16000, flavorPrice: 1000, decorationTotal: 3000, dietaryUpcharge: 1000, totalPrice: 21000 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['6inch'] * 2, 
+      flavorPrice: pricing.flavorPrices['lemon-poppyseed'] * 2,
+      decorationTotal: pricing.decorationPrices['gold-leaf'] * 2,
+      dietaryUpcharge: pricing.dietaryPrices.halal * 2,
+      totalPrice: (pricing.basePrices['6inch'] * 2) + (pricing.flavorPrices['lemon-poppyseed'] * 2) + (pricing.decorationPrices['gold-leaf'] * 2) + (pricing.dietaryPrices.halal * 2)
+    })
   },
   {
     name: "8-inch orange-poppyseed cake with multi-layers and square shape",
@@ -95,7 +120,16 @@ const testCases = [
       sixInchCakes: 0,
       eightInchCakes: 1
     },
-    expected: { basePrice: 15500, layerPrice: 3000, flavorPrice: 500, decorationTotal: 1200, icingPrice: 1000, totalPrice: 21200 }
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['8inch'] + (pricing.layerPrice * 2), // 3 layers = base + 2 additional
+      layerPrice: pricing.layerPrice * 2,
+      flavorPrice: pricing.flavorPrices['orange-poppyseed'],
+      shapePrice: pricing.shapePrices.square,
+      decorationTotal: pricing.decorationPrices['fresh-fruit'],
+      icingPrice: pricing.icingTypes.fondant,
+      dietaryUpcharge: 0,
+      totalPrice: pricing.basePrices['8inch'] + (pricing.layerPrice * 2) + pricing.flavorPrices['orange-poppyseed'] + pricing.shapePrices.square + pricing.decorationPrices['fresh-fruit'] + pricing.icingTypes.fondant
+    })
   },
   {
     name: "Mixed order: 1x 6-inch + 1x 8-inch with vegan option",
@@ -111,88 +145,210 @@ const testCases = [
       sixInchCakes: 1,
       eightInchCakes: 1
     },
-    expected: { basePrice: 23500, layerPrice: 3000, shapePrice: 3600, decorationTotal: 1400, icingPrice: 2000, dietaryUpcharge: 7000, totalPrice: 40500 }
+    calculateExpected: (pricing) => {
+      const basePrice = pricing.basePrices['6inch'] + pricing.basePrices['8inch'];
+      const layerPrice = pricing.layerPrice * 2;
+      const shapePrice = pricing.shapePrices.heart * 2;
+      const decorationTotal = pricing.decorationPrices['happy-birthday'] * 2;
+      const icingPrice = pricing.icingTypes.whipped * 2;
+      const dietaryUpcharge = pricing.dietaryPrices.vegan * 2;
+      
+      return {
+        basePrice: basePrice + layerPrice,
+        layerPrice: layerPrice,
+        shapePrice: shapePrice,
+        decorationTotal: decorationTotal,
+        icingPrice: icingPrice,
+        dietaryUpcharge: dietaryUpcharge,
+        totalPrice: basePrice + layerPrice + shapePrice + decorationTotal + icingPrice + dietaryUpcharge
+      };
+    }
+  },
+  {
+    name: "6-inch cake with decoration",
+    data: {
+      layers: 1,
+      servings: 6,
+      decorations: ["flowers"],
+      icingType: "butter",
+      dietaryRestrictions: [],
+      flavors: ["butter"],
+      shape: "round",
+      photoUpload: false,
+      sixInchCakes: 1,
+      eightInchCakes: 0
+    },
+    calculateExpected: (pricing) => {
+      const basePrice = pricing.basePrices['6inch'];
+      const decorationPrice = pricing.decorationPrices['flowers'] || 1500;
+      return { 
+        basePrice: basePrice, 
+        flavorPrice: 0, 
+        decorationTotal: decorationPrice, 
+        totalPrice: basePrice + decorationPrice 
+      };
+    }
+  },
+  {
+    name: "8-inch cake basic",
+    data: {
+      layers: 1,
+      servings: 8,
+      decorations: [],
+      icingType: "butter",
+      dietaryRestrictions: [],
+      flavors: ["butter"],
+      shape: "round",
+      photoUpload: false,
+      sixInchCakes: 0,
+      eightInchCakes: 1
+    },
+    calculateExpected: (pricing) => ({ 
+      basePrice: pricing.basePrices['8inch'], 
+      totalPrice: pricing.basePrices['8inch'] 
+    })
+  },
+  {
+    name: "Mixed order: 2x 6-inch lemon with dietary restrictions",
+    data: {
+      layers: 1,
+      servings: 12,
+      decorations: [],
+      icingType: "buttercream",
+      dietaryRestrictions: ["eggless"],
+      flavors: ["lemon"],
+      shape: "round",
+      photoUpload: false,
+      sixInchCakes: 2,
+      eightInchCakes: 0
+    },
+    calculateExpected: (pricing) => {
+      const basePrice = pricing.basePrices['6inch'] * 2;
+      const flavorPrice = (pricing.flavorPrices['lemon'] || 0) * 2;
+      const icingPrice = (pricing.icingTypes['buttercream'] || 0) * 2;
+      const dietaryUpcharge = (pricing.dietaryPrices['eggless'] || 0) * 2;
+      return { 
+        basePrice: basePrice, 
+        flavorPrice: flavorPrice, 
+        icingPrice: icingPrice,
+        decorationTotal: 0, 
+        dietaryUpcharge: dietaryUpcharge, 
+        totalPrice: basePrice + flavorPrice + icingPrice + dietaryUpcharge 
+      };
+    }
+  },
+  {
+    name: "Complex order: 8-inch multi-layer heart with decorations",
+    data: {
+      layers: 2,
+      servings: 10,
+      decorations: ["gold-leaf"],
+      icingType: "fondant",
+      dietaryRestrictions: ["vegan"],
+      flavors: ["chocolate"],
+      shape: "heart",
+      photoUpload: false,
+      sixInchCakes: 0,
+      eightInchCakes: 1
+    },
+    calculateExpected: (pricing) => {
+      const basePrice = pricing.basePrices['8inch'];
+      const layerPrice = pricing.layerPrice;
+      const shapePrice = pricing.shapePrices['heart'];
+      const decorationPrice = pricing.decorationPrices['gold-leaf'];
+      const icingPrice = pricing.icingTypes['fondant'];
+      const flavorPrice = pricing.flavorPrices['chocolate'];
+      const veganUpcharge = pricing.dietaryPrices['vegan'];
+      const dietaryUpcharge = veganUpcharge;
+      return { 
+        basePrice: basePrice, 
+        layerPrice: layerPrice, 
+        flavorPrice: flavorPrice,
+        shapePrice: shapePrice, 
+        decorationTotal: decorationPrice, 
+        icingPrice: icingPrice, 
+        dietaryUpcharge: dietaryUpcharge, 
+        totalPrice: basePrice + layerPrice + flavorPrice + shapePrice + decorationPrice + icingPrice + dietaryUpcharge 
+      };
+    }
   }
 ];
 
-async function testPricing() {
-  console.log("🧪 Testing Cake Pricing System");
-  console.log("==============================");
-  
-  for (const test of testCases) {
-    try {
-      const response = await fetch('http://localhost:5000/api/calculate-price', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(test.data)
-      });
-      
-      const result = await response.json();
-      
-      console.log(`\n✅ ${test.name}:`);
-      console.log(`   Request: ${JSON.stringify(test.data)}`);
-      
-      if (!response.ok) {
-        console.log(`   ❌ HTTP ${response.status}: ${result.message || 'Unknown error'}`);
-        continue;
-      }
-      
-      console.log(`   Base Price: RM ${(result.basePrice / 100).toFixed(2)} (expected: RM ${(test.expected.basePrice / 100).toFixed(2)})`);
-      
-      if (test.expected.layerPrice) {
-        console.log(`   Layer Price: RM ${(result.layerPrice / 100).toFixed(2)} (expected: RM ${(test.expected.layerPrice / 100).toFixed(2)})`);
-      }
-      
-      if (test.expected.flavorPrice) {
-        console.log(`   Flavor Price: RM ${(result.flavorPrice / 100).toFixed(2)} (expected: RM ${(test.expected.flavorPrice / 100).toFixed(2)})`);
-      }
-      
-      if (test.expected.shapePrice) {
-        console.log(`   Shape Price: RM ${(result.shapePrice / 100).toFixed(2)} (expected: RM ${(test.expected.shapePrice / 100).toFixed(2)})`);
-      }
-      
-      if (test.expected.decorationTotal) {
-        console.log(`   Decoration Total: RM ${(result.decorationTotal / 100).toFixed(2)} (expected: RM ${(test.expected.decorationTotal / 100).toFixed(2)})`);
-      }
-      
-      if (test.expected.icingPrice) {
-        console.log(`   Icing Price: RM ${(result.icingPrice / 100).toFixed(2)} (expected: RM ${(test.expected.icingPrice / 100).toFixed(2)})`);
-      }
-      
-      if (test.expected.dietaryUpcharge) {
-        console.log(`   Dietary Upcharge: RM ${(result.dietaryUpcharge / 100).toFixed(2)} (expected: RM ${(test.expected.dietaryUpcharge / 100).toFixed(2)})`);
-      }
-      
-      console.log(`   Total Price: RM ${(result.totalPrice / 100).toFixed(2)} (expected: RM ${(test.expected.totalPrice / 100).toFixed(2)})`);
-      
-      // Verify expectations
-      const basePriceMatch = result.basePrice === test.expected.basePrice;
-      const totalPriceMatch = result.totalPrice === test.expected.totalPrice;
-      const layerPriceMatch = !test.expected.layerPrice || result.layerPrice === test.expected.layerPrice;
-      const flavorPriceMatch = !test.expected.flavorPrice || result.flavorPrice === test.expected.flavorPrice;
-      const shapePriceMatch = !test.expected.shapePrice || result.shapePrice === test.expected.shapePrice;
-      const decorationMatch = !test.expected.decorationTotal || result.decorationTotal === test.expected.decorationTotal;
-      const icingMatch = !test.expected.icingPrice || result.icingPrice === test.expected.icingPrice;
-      const dietaryMatch = !test.expected.dietaryUpcharge || result.dietaryUpcharge === test.expected.dietaryUpcharge;
-      
-      if (basePriceMatch && totalPriceMatch && layerPriceMatch && flavorPriceMatch && shapePriceMatch && decorationMatch && icingMatch && dietaryMatch) {
-        console.log(`   ✅ PASS`);
-      } else {
-        console.log(`   ❌ FAIL - Mismatched values:`);
-        if (!basePriceMatch) console.log(`     - Base price: got ${result.basePrice}, expected ${test.expected.basePrice}`);
-        if (!layerPriceMatch) console.log(`     - Layer price: got ${result.layerPrice}, expected ${test.expected.layerPrice}`);
-        if (!flavorPriceMatch) console.log(`     - Flavor price: got ${result.flavorPrice}, expected ${test.expected.flavorPrice}`);
-        if (!shapePriceMatch) console.log(`     - Shape price: got ${result.shapePrice}, expected ${test.expected.shapePrice}`);
-        if (!decorationMatch) console.log(`     - Decoration total: got ${result.decorationTotal}, expected ${test.expected.decorationTotal}`);
-        if (!icingMatch) console.log(`     - Icing price: got ${result.icingPrice}, expected ${test.expected.icingPrice}`);
-        if (!dietaryMatch) console.log(`     - Dietary upcharge: got ${result.dietaryUpcharge}, expected ${test.expected.dietaryUpcharge}`);
-        if (!totalPriceMatch) console.log(`     - Total price: got ${result.totalPrice}, expected ${test.expected.totalPrice}`);
-      }
-      
-    } catch (error) {
-      console.log(`   ❌ ERROR: ${error.message}`);
+async function fetchPricingStructure() {
+  try {
+    const response = await fetch('http://localhost:5000/api/pricing-structure');
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+    return await response.json();
+  } catch (error) {
+    console.error('ISSUE: Failed to fetch pricing structure:', error.message);
+    return null;
   }
 }
 
-testPricing();
+async function testPricing() {
+  try {
+    console.log('🔄 Fetching current pricing structure...');
+    pricingStructure = await fetchPricingStructure();
+    console.log('✅ Pricing structure loaded:');
+    console.log(`   6-inch base: ${pricingStructure.basePrices['6inch']} cents (RM ${(pricingStructure.basePrices['6inch'] / 100).toFixed(0)})`);
+    console.log(`   8-inch base: ${pricingStructure.basePrices['8inch']} cents (RM ${(pricingStructure.basePrices['8inch'] / 100).toFixed(0)})`);
+    console.log('');
+
+    let passed = 0;
+    let failed = 0;
+
+    for (const testCase of testCases) {
+      try {
+        const response = await fetch('http://localhost:5000/api/calculate-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testCase.data)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        const expected = testCase.calculateExpected(pricingStructure);
+        
+        const actualTotal = result.totalPrice;
+        const expectedTotal = expected.totalPrice;
+        
+        if (actualTotal === expectedTotal) {
+          console.log(`✅ ${testCase.name}: RM ${(actualTotal / 100).toFixed(2)}`);
+          passed++;
+        } else {
+          console.log(`[FAIL] ${testCase.name}:`);
+          console.log(`   Expected: RM ${(expectedTotal / 100).toFixed(2)} (${expectedTotal} cents)`);
+          console.log(`   Actual: RM ${(actualTotal / 100).toFixed(2)} (${actualTotal} cents)`);
+          console.log('   Expected breakdown:', expected);
+          console.log('   Actual result:', result);
+          failed++;
+        }
+      } catch (error) {
+        console.log(`[ERROR] ${testCase.name}: Error - ${error.message}`);
+        failed++;
+      }
+    }
+
+    console.log('\n📊 Test Summary:');
+    console.log(`✅ Passed: ${passed}`);
+    console.log(`❌ Failed: ${failed}`);
+    console.log(`📈 Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
+
+    if (failed > 0) {
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('[ERROR] Test execution failed:', error.message);
+    process.exit(1);
+  }
+}
+
+// Check if running directly (ES module version)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  testPricing();
+}

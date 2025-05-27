@@ -1,12 +1,12 @@
 {
   "basePrices": {
-    "6inch": 8000,
-    "8inch": 15500
+    "6inch": 9000,
+    "8inch": 16000
   },
   "layerPrice": 1500,
   "flavorPrices": {
-    "chocolate": 0,
     "butter": 0,
+    "chocolate": 0,
     "orange": 0,
     "lemon": 0,
     "orange-poppyseed": 500,
@@ -16,6 +16,7 @@
     "butter": 0,
     "buttercream": 1000,
     "whipped": 1000,
+    "chocolate": 1000,
     "fondant": 1000
   },
   "decorationPrices": {
@@ -35,5 +36,8 @@
     "round": 0,
     "square": 0,
     "heart": 1800
+  },
+  "templatePrices": {
+    "fathers-day": 1000
   }
-} 
+}

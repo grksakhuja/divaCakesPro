@@ -169,58 +169,25 @@ var storage = new DatabaseStorage();
 import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from "url";
-
-// server/pricing-data.ts
-var pricingStructure = {
-  "basePrices": {
-    "6inch": 8e3,
-    "8inch": 15500
-  },
-  "layerPrice": 1500,
-  "flavorPrices": {
-    "chocolate": 0,
-    "butter": 0,
-    "orange": 0,
-    "lemon": 0,
-    "orange-poppyseed": 500,
-    "lemon-poppyseed": 500
-  },
-  "icingTypes": {
-    "butter": 0,
-    "buttercream": 1e3,
-    "whipped": 1e3,
-    "fondant": 1e3
-  },
-  "decorationPrices": {
-    "sprinkles": 500,
-    "fresh-fruit": 1200,
-    "flowers": 1500,
-    "gold-leaf": 1500,
-    "happy-birthday": 700,
-    "anniversary": 700
-  },
-  "dietaryPrices": {
-    "halal": 500,
-    "eggless": 1e3,
-    "vegan": 3500
-  },
-  "shapePrices": {
-    "round": 0,
-    "square": 0,
-    "heart": 1800
-  }
-};
-
-// server/routes.ts
+import fs from "fs";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
+function getPricingStructure() {
+  try {
+    const pricingStructurePath = path.join(__dirname, "server", "pricing-structure.json");
+    return JSON.parse(fs.readFileSync(pricingStructurePath, "utf-8"));
+  } catch (error) {
+    console.error("Error reading pricing structure:", error);
+    throw new Error("Failed to load pricing structure");
+  }
+}
 async function registerRoutes(app2) {
   const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
   const activeSessions = /* @__PURE__ */ new Map();
   setInterval(() => {
     const now = Date.now();
-    for (const [token, session2] of activeSessions.entries()) {
+    for (const [token, session2] of Array.from(activeSessions.entries())) {
       if (now - session2.timestamp > 24 * 60 * 60 * 1e3) {
         activeSessions.delete(token);
       }
@@ -362,11 +329,15 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/calculate-price", async (req, res) => {
     try {
-      const pricing = pricingStructure;
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
       if (template === "fathers-day" || template === "999" || template === 999) {
+        const pricingStructure2 = getPricingStructure();
+        const basePrice2 = pricingStructure2.basePrices["6inch"];
+        const templatePrice = pricingStructure2.templatePrices["fathers-day"] || 0;
+        const fathersDayTotalPrice = basePrice2 + templatePrice;
         return res.json({
-          basePrice: 8e3,
+          basePrice: basePrice2,
+          templatePrice,
           layerPrice: 0,
           flavorPrice: 0,
           shapePrice: 0,
@@ -375,9 +346,10 @@ async function registerRoutes(app2) {
           dietaryUpcharge: 0,
           photoPrice: 0,
           cakeQuantity: 1,
-          totalPrice: 8e3,
+          totalPrice: fathersDayTotalPrice,
           breakdown: {
-            base: 8e3,
+            base: basePrice2,
+            template: templatePrice,
             layers: 0,
             flavors: 0,
             shape: 0,
@@ -388,39 +360,40 @@ async function registerRoutes(app2) {
           }
         });
       }
+      const pricingStructure = getPricingStructure();
       const sixInch = Math.max(0, parseInt(String(sixInchCakes)) || 0);
       const eightInch = Math.max(0, parseInt(String(eightInchCakes)) || 0);
       const totalCakes = sixInch + eightInch;
       if (totalCakes === 0) {
         return res.status(400).json({ message: "Must select at least one cake" });
       }
-      const basePrice = sixInch * pricing.basePrices["6inch"] + eightInch * pricing.basePrices["8inch"];
-      const layerPrice = Math.max(0, layers - 1) * pricing.layerPrice * totalCakes;
+      const basePrice = sixInch * pricingStructure.basePrices["6inch"] + eightInch * pricingStructure.basePrices["8inch"];
+      const layerPrice = Math.max(0, layers - 1) * pricingStructure.layerPrice * totalCakes;
       let flavorPrice = 0;
       if (Array.isArray(flavors)) {
         flavors.forEach((flavor) => {
           const key = String(flavor).replace(/\s+/g, "-").toLowerCase();
-          flavorPrice += pricing.flavorPrices[key] || 0;
+          flavorPrice += pricingStructure.flavorPrices[key] || 0;
         });
       }
       flavorPrice *= totalCakes;
-      let shapePrice = pricing.shapePrices[shape] || 0;
+      let shapePrice = pricingStructure.shapePrices[shape] || 0;
       shapePrice *= totalCakes;
       let decorationTotal = 0;
       if (Array.isArray(decorations)) {
         decorations.forEach((decoration) => {
           const key = String(decoration).replace(/\s+/g, "-").toLowerCase();
-          decorationTotal += pricing.decorationPrices[key] || 0;
+          decorationTotal += pricingStructure.decorationPrices[key] || 0;
         });
       }
       decorationTotal *= totalCakes;
       const icingKey = String(icingType).replace(/\s+/g, "-").toLowerCase();
-      const icingPrice = (pricing.icingTypes[icingKey] || 0) * totalCakes;
+      const icingPrice = (pricingStructure.icingTypes[icingKey] || 0) * totalCakes;
       let dietaryUpcharge = 0;
       if (Array.isArray(dietaryRestrictions)) {
         dietaryRestrictions.forEach((restriction) => {
           const key = String(restriction).replace(/\s+/g, "-").toLowerCase();
-          dietaryUpcharge += pricing.dietaryPrices[key] || 0;
+          dietaryUpcharge += pricingStructure.dietaryPrices[key] || 0;
         });
       }
       dietaryUpcharge *= totalCakes;
@@ -455,7 +428,7 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/pricing-structure", (req, res) => {
     try {
-      res.json(pricingStructure);
+      res.json(getPricingStructure());
     } catch (err) {
       console.error("Error serving pricing structure:", err);
       res.status(500).json({ error: "Could not load pricing structure" });
@@ -467,7 +440,7 @@ async function registerRoutes(app2) {
 
 // server/vite.ts
 import express2 from "express";
-import fs from "fs";
+import fs2 from "fs";
 import path3 from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 
@@ -536,7 +509,7 @@ async function setupVite(app2, server) {
         "client",
         "index.html"
       );
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      let template = await fs2.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
@@ -551,7 +524,7 @@ async function setupVite(app2, server) {
 }
 function serveStatic(app2) {
   const distPath = path3.resolve(__dirname3, "public");
-  if (!fs.existsSync(distPath)) {
+  if (!fs2.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
