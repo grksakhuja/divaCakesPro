@@ -1,7 +1,7 @@
 {
   "basePrices": {
-    "6inch": 10000,
-    "8inch": 15500
+    "6inch": 9000,
+    "8inch": 16000
   },
   "layerPrice": 1500,
   "flavorPrices": {
@@ -36,5 +36,8 @@
     "round": 0,
     "square": 0,
     "heart": 1800
+  },
+  "templatePrices": {
+    "fathers-day": 1000
   }
-} 
+}

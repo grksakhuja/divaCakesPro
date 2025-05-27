@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Clean expired sessions periodically
   setInterval(() => {
     const now = Date.now();
-    for (const [token, session] of activeSessions.entries()) {
+    for (const [token, session] of Array.from(activeSessions.entries())) {
       if (now - session.timestamp > 24 * 60 * 60 * 1000) {
         activeSessions.delete(token);
       }
@@ -221,10 +221,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (template === "fathers-day" || template === "999" || template === 999) {
         // Get fresh pricing structure for Father's Day template
         const pricingStructure = getPricingStructure();
-        const fathersDayPrice = pricingStructure.basePrices["6inch"]; // Use 6-inch price for Father's Day template
+        const basePrice = pricingStructure.basePrices["6inch"]; // Base 6-inch price
+        const templatePrice = pricingStructure.templatePrices["fathers-day"] || 0; // Template markup
+        const fathersDayTotalPrice = basePrice + templatePrice; // Base + template pricing
         
         return res.json({
-          basePrice: fathersDayPrice,
+          basePrice: basePrice,
+          templatePrice: templatePrice,
           layerPrice: 0,
           flavorPrice: 0,
           shapePrice: 0,
@@ -233,9 +236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dietaryUpcharge: 0,
           photoPrice: 0,
           cakeQuantity: 1,
-          totalPrice: fathersDayPrice,
+          totalPrice: fathersDayTotalPrice,
           breakdown: {
-            base: fathersDayPrice,
+            base: basePrice,
+            template: templatePrice,
             layers: 0,
             flavors: 0,
             shape: 0,

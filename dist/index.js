@@ -187,7 +187,7 @@ async function registerRoutes(app2) {
   const activeSessions = /* @__PURE__ */ new Map();
   setInterval(() => {
     const now = Date.now();
-    for (const [token, session2] of activeSessions.entries()) {
+    for (const [token, session2] of Array.from(activeSessions.entries())) {
       if (now - session2.timestamp > 24 * 60 * 60 * 1e3) {
         activeSessions.delete(token);
       }
@@ -332,9 +332,12 @@ async function registerRoutes(app2) {
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
       if (template === "fathers-day" || template === "999" || template === 999) {
         const pricingStructure2 = getPricingStructure();
-        const fathersDayPrice = pricingStructure2.basePrices["6inch"];
+        const basePrice2 = pricingStructure2.basePrices["6inch"];
+        const templatePrice = pricingStructure2.templatePrices["fathers-day"] || 0;
+        const fathersDayTotalPrice = basePrice2 + templatePrice;
         return res.json({
-          basePrice: fathersDayPrice,
+          basePrice: basePrice2,
+          templatePrice,
           layerPrice: 0,
           flavorPrice: 0,
           shapePrice: 0,
@@ -343,9 +346,10 @@ async function registerRoutes(app2) {
           dietaryUpcharge: 0,
           photoPrice: 0,
           cakeQuantity: 1,
-          totalPrice: fathersDayPrice,
+          totalPrice: fathersDayTotalPrice,
           breakdown: {
-            base: fathersDayPrice,
+            base: basePrice2,
+            template: templatePrice,
             layers: 0,
             flavors: 0,
             shape: 0,
