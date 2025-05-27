@@ -370,22 +370,19 @@ export default function CakeBuilder() {
                         variant="outline"
                         className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
                         onClick={() => {
-                          const fathersTemplate = {
-                            id: 999,
-                            name: "Father's Day Special",
-                            category: "fathers-day",
+                          updateConfig({
+                            template: "fathers-day",
                             layers: 1,
-                            shape: "round",
+                            shape: "round" as const,
                             flavors: ["butter"],
                             icingColor: "#87CEEB",
-                            icingType: "butter",
+                            icingType: "butter" as const,
                             decorations: [],
-                            basePrice: pricingStructure?.basePrices?.['6inch'] || 8000,
                             servings: 6,
                             sixInchCakes: 1,
                             eightInchCakes: 0,
-                          };
-                          handleTemplateSelect(fathersTemplate);
+                          });
+                          goToStep(7); // Go to Size & Servings step instead of customer form
                         }}
                       >
                         👨‍👦 Father's Day Special Cake
@@ -404,22 +401,19 @@ export default function CakeBuilder() {
                     variant="outline"
                     className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
                     onClick={() => {
-                      const fathersTemplate = {
-                        id: 999,
-                        name: "Father's Day Special",
-                        category: "fathers-day",
+                      updateConfig({
+                        template: "fathers-day",
                         layers: 1,
-                        shape: "round",
+                        shape: "round" as const,
                         flavors: ["butter"],
                         icingColor: "#87CEEB",
-                        icingType: "butter",
+                        icingType: "butter" as const,
                         decorations: [],
-                        basePrice: pricingStructure?.basePrices?.['6inch'] || 8000,
                         servings: 6,
                         sixInchCakes: 1,
                         eightInchCakes: 0,
-                      };
-                      handleTemplateSelect(fathersTemplate);
+                      });
+                      goToStep(7); // Go to Size & Servings step instead of customer form
                     }}
                   >
                     👨‍👦 Father's Day Special Cake
