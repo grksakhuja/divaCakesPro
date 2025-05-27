@@ -182,6 +182,23 @@ import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+
+// server/feature-flags.ts
+var featureFlags = {
+  templates: {
+    showTemplateSection: false,
+    enableTemplateApi: false,
+    enableTemplateSeeding: false
+  }
+};
+function isTemplateApiEnabled() {
+  return featureFlags.templates.enableTemplateApi;
+}
+function isTemplateSeedingEnabled() {
+  return featureFlags.templates.enableTemplateSeeding;
+}
+
+// server/routes.ts
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 function getPricingStructure() {
@@ -247,7 +264,24 @@ async function registerRoutes(app2) {
       res.status(401).json({ message: "Admin access required" });
     }
   };
+  app2.get("/api/feature-flags", (req, res) => {
+    try {
+      res.json({
+        templates: {
+          showTemplateSection: featureFlags.templates.showTemplateSection,
+          enableTemplateApi: featureFlags.templates.enableTemplateApi,
+          enableTemplateSeeding: featureFlags.templates.enableTemplateSeeding
+        }
+      });
+    } catch (error) {
+      console.error("Error serving feature flags:", error);
+      res.status(500).json({ message: "Failed to fetch feature flags" });
+    }
+  });
   app2.get("/api/templates", async (req, res) => {
+    if (!isTemplateApiEnabled()) {
+      return res.status(404).json({ message: "Template API is currently disabled" });
+    }
     try {
       const templates = await storage.getCakeTemplates();
       res.json(templates);
@@ -256,6 +290,9 @@ async function registerRoutes(app2) {
     }
   });
   app2.get("/api/templates/:category", async (req, res) => {
+    if (!isTemplateApiEnabled()) {
+      return res.status(404).json({ message: "Template API is currently disabled" });
+    }
     try {
       const { category } = req.params;
       const templates = await storage.getCakeTemplatesByCategory(category);
@@ -682,6 +719,7 @@ async function seedTemplatesInline() {
 var app = express3();
 app.use(express3.json());
 app.use(express3.urlencoded({ extended: false }));
+app.use(express3.static("public"));
 app.get("/health", (req, res) => {
   const actualPort = parseInt(process.env.PORT || "5000", 10);
   res.status(200).json({
@@ -738,14 +776,11 @@ app.use((req, res, next) => {
   next();
 });
 async function startServer() {
-  try {
-    console.log("\u{1F504} Starting template seeding (inline)...");
+  if (isTemplateSeedingEnabled()) {
+    console.log("\u{1F331} Template seeding enabled - running seeding...");
     await seedTemplatesInline();
-    console.log("\u2705 Inline seedTemplates completed successfully");
-  } catch (error) {
-    console.log("\u274C Failed to seed templates:", error instanceof Error ? error.message : String(error));
-    console.error("Full error:", error);
-    console.log("\u{1F504} Continuing with server startup despite seeding failure...");
+  } else {
+    console.log("\u{1F6AB} Template seeding disabled by feature flag");
   }
   console.log("\u{1F527} Registering routes...");
   const server = await registerRoutes(app);

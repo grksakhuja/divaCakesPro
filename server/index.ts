@@ -6,6 +6,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db } from "./db";
 import { cakeTemplates } from "@shared/schema";
+import { isTemplateSeedingEnabled } from "./feature-flags";
 
 // Initialize seeding immediately
 console.log("🚀 Starting server initialization...");
@@ -100,6 +101,7 @@ async function seedTemplatesInline() {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(express.static("public"));
 
 // Add a simple health check endpoint
 app.get('/health', (req, res) => {
@@ -164,16 +166,12 @@ app.use((req, res, next) => {
 });
 
 async function startServer() {
-  // Seed templates on startup with inline function
-  try {
-    console.log("🔄 Starting template seeding (inline)...");
+  // Feature-controlled template seeding
+  if (isTemplateSeedingEnabled()) {
+    console.log("🌱 Template seeding enabled - running seeding...");
     await seedTemplatesInline();
-    console.log("✅ Inline seedTemplates completed successfully");
-  } catch (error) {
-    console.log("❌ Failed to seed templates:", error instanceof Error ? error.message : String(error));
-    console.error("Full error:", error);
-    // Don't exit on seeding failure - continue with server startup
-    console.log("🔄 Continuing with server startup despite seeding failure...");
+  } else {
+    console.log("🚫 Template seeding disabled by feature flag");
   }
 
   console.log("🔧 Registering routes...");

@@ -74,6 +74,10 @@
 }
 
 @layer utilities {
+  .font-brand {
+    font-family: 'Dancing Script', cursive;
+  }
+  
   .cake-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
   }

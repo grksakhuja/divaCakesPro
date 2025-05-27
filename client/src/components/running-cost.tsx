@@ -43,8 +43,8 @@ export default function RunningCost({ pricingStructure }: { pricingStructure?: a
   // }
 
   return (
-    <Card className="fixed bottom-4 left-4 right-4 shadow-lg border-primary/20 bg-white/95 backdrop-blur-sm z-30 max-w-lg mx-auto">
-      <CardContent className="p-3">
+    <Card className="fixed bottom-4 left-4 right-4 shadow-lg border-primary/20 bg-white/95 backdrop-blur-sm z-30 max-w-lg mx-auto max-h-32 overflow-hidden">
+      <CardContent className="p-3 overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-neutral-900">
