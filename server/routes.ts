@@ -7,6 +7,7 @@ import { z } from "zod";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
+import { pricingStructure } from "./pricing-data";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -203,8 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calculate pricing endpoint - now reads from pricing-structure.json
   app.post("/api/calculate-price", async (req, res) => {
     try {
-      const pricingPath = path.join(__dirname, "./pricing-structure.json");
-      const pricing = JSON.parse(fs.readFileSync(pricingPath, "utf-8"));
+      const pricing = pricingStructure;
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
 
       // Special pricing for Father's Day template
@@ -318,12 +318,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve pricing structure for frontend
   app.get("/api/pricing-structure", (req, res) => {
-    const pricingPath = path.join(__dirname, "./pricing-structure.json");
     try {
-      const data = fs.readFileSync(pricingPath, "utf-8");
-      res.json(JSON.parse(data));
+      res.json(pricingStructure);
     } catch (err) {
-      res.status(500).json({ message: "Could not load pricing structure" });
+      console.error("Error serving pricing structure:", err);
+      res.status(500).json({ error: "Could not load pricing structure" });
     }
   });
 
