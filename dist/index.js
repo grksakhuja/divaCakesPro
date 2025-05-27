@@ -381,9 +381,15 @@ async function registerRoutes(app2) {
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
       if (template === "fathers-day" || template === "999" || template === 999) {
         const pricingStructure2 = getPricingStructure();
-        const basePrice2 = pricingStructure2.basePrices["6inch"];
-        const templatePrice = pricingStructure2.templatePrices["fathers-day"] || 0;
-        const fathersDayTotalPrice = basePrice2 + templatePrice;
+        const sixInch2 = Math.max(0, parseInt(String(sixInchCakes)) || 0);
+        const eightInch2 = Math.max(0, parseInt(String(eightInchCakes)) || 0);
+        const totalCakes2 = sixInch2 + eightInch2;
+        if (totalCakes2 === 0) {
+          return res.status(400).json({ message: "Must select at least one cake for Father's Day special" });
+        }
+        const basePrice2 = sixInch2 * pricingStructure2.basePrices["6inch"] + eightInch2 * pricingStructure2.basePrices["8inch"];
+        const templatePrice = (pricingStructure2.templatePrices["fathers-day"] || 1e3) * totalCakes2;
+        const totalPrice2 = basePrice2 + templatePrice;
         return res.json({
           basePrice: basePrice2,
           templatePrice,
@@ -394,8 +400,8 @@ async function registerRoutes(app2) {
           icingPrice: 0,
           dietaryUpcharge: 0,
           photoPrice: 0,
-          cakeQuantity: 1,
-          totalPrice: fathersDayTotalPrice,
+          cakeQuantity: totalCakes2,
+          totalPrice: totalPrice2,
           breakdown: {
             base: basePrice2,
             template: templatePrice,
