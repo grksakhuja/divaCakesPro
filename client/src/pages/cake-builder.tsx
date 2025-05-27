@@ -26,7 +26,8 @@ import {
   Check,
   Mail,
   User,
-  CheckCircle
+  CheckCircle,
+  X
 } from "lucide-react";
 import { useCakeBuilder } from "@/lib/cake-builder-store";
 import ProgressIndicator from "@/components/progress-indicator";
@@ -45,8 +46,21 @@ import {
 } from "@/types/cake";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import ImprovedButtonGrid from "@/components/ui/improved-button-grid";
 import ImprovedSelectionCard from "@/components/ui/improved-selection-card";
+
+// Add this right after the imports and before the export default function CakeBuilder()
+const SIMPLIFIED_COLOR_PALETTE = [
+  { id: "white", name: "White", hex: "#FFFFFF" },
+  { id: "light-pink", name: "Pink", hex: "#FFB6C1" },
+  { id: "sky-blue", name: "Blue", hex: "#87CEEB" },
+  { id: "mint-green", name: "Green", hex: "#98FB98" },
+  { id: "lemon-yellow", name: "Yellow", hex: "#F0E68C" },
+  { id: "lavender", name: "Purple", hex: "#DDA0DD" },
+  { id: "peach", name: "Orange", hex: "#FFA07A" },
+  { id: "cream", name: "Cream", hex: "#F5DEB3" },
+];
 
 export default function CakeBuilder() {
   const { 
@@ -61,10 +75,14 @@ export default function CakeBuilder() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showTemplates, setShowTemplates] = useState(false);
+  
+  // Feature flags
+  const { featureFlags } = useFeatureFlags();
 
-  // Fetch templates
+  // Fetch templates - only when feature flag is enabled
   const { data: templates, isLoading: templatesLoading, error: templatesError } = useQuery({
     queryKey: ["/api/templates"],
+    enabled: featureFlags.templates.enableTemplateApi,
   });
 
   // Debug logging for templates
@@ -240,7 +258,7 @@ export default function CakeBuilder() {
       <ProgressIndicator />
       <RunningCost pricingStructure={pricingStructure} />
       
-      <div className="pt-20 pb-32">
+      <div className="pt-20 pb-40">
         <div className="max-w-lg mx-auto px-4">
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
@@ -254,24 +272,25 @@ export default function CakeBuilder() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="text-center mb-8">
-                  <img 
-                    src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" 
-                    alt="Beautiful decorated cake" 
-                    className="w-48 h-36 object-cover rounded-xl mx-auto mb-6 shadow-lg"
-                  />
-                  <h1 className="text-4xl font-bold text-neutral-900 font-heading mb-3">
-                    Build Your Dream Cake!
-                  </h1>
+                <div className="text-center mb-16">
+                  <div className="mb-12 mt-8">
+                    <div className="text-6xl mb-1 animate-float">🎂🍰🧁</div>
+                    <h1 className="text-5xl font-extrabold text-pink-600 mb-8 tracking-wide">
+                      Sugar Art Diva
+                    </h1>
+                  </div>
+                  <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+                    Build Your Dream Cake! 🎂
+                  </h2>
                   <p className="text-neutral-500 text-lg">
-                    Create a custom cake that's perfect for your special occasion
+                    Where Every Cake is a Masterpiece - Designed Just for You!
                   </p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Base Size Selection - IMPROVED with component */}
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold text-neutral-800">Choose Your Base Size</h3>
+                    <h3 className="text-lg font-semibold text-neutral-800">🎂 Choose Your Base Size</h3>
                     <ImprovedButtonGrid
                       items={[
                         {
@@ -319,31 +338,68 @@ export default function CakeBuilder() {
                     />
                   </div>
                   
+                  {/* TEMPLATE BUTTONS - FEATURE FLAG CONTROLLED */}
+                  {featureFlags.templates.showTemplateSection && (
+                    <>
+                      <Separator />
+                      
+                      <div className="text-center text-sm text-neutral-500">
+                        Or choose from our templates
+                      </div>
+                      
+                      <Button 
+                        variant="outline"
+                        className="w-full btn-touch btn-secondary"
+                        onClick={() => setShowTemplates(!showTemplates)}
+                        disabled={templatesLoading}
+                      >
+                        <Star className="mr-3 h-5 w-5" />
+                        {templatesLoading ? (
+                          <>
+                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            Loading Templates...
+                          </>
+                        ) : templatesError ? (
+                          <>Error Loading Templates</>
+                        ) : (
+                          <>Choose a Template {Array.isArray(templates) ? `(${templates.length})` : ''}</>
+                        )}
+                      </Button>
+
+                      <Button 
+                        variant="outline"
+                        className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
+                        onClick={() => {
+                          const fathersTemplate = {
+                            id: 999,
+                            name: "Father's Day Special",
+                            category: "fathers-day",
+                            layers: 1,
+                            shape: "round",
+                            flavors: ["butter"],
+                            icingColor: "#87CEEB",
+                            icingType: "butter",
+                            decorations: [],
+                            basePrice: pricingStructure?.basePrices?.['6inch'] || 8000,
+                            servings: 6,
+                            sixInchCakes: 1,
+                            eightInchCakes: 0,
+                          };
+                          handleTemplateSelect(fathersTemplate);
+                        }}
+                      >
+                        👨‍👦 Father's Day Special Cake
+                      </Button>
+                    </>
+                  )}
+
+                  {/* FATHER'S DAY SPECIAL - ALWAYS AVAILABLE */}
                   <Separator />
                   
                   <div className="text-center text-sm text-neutral-500">
-                    Or choose from our templates
+                    Special Occasion
                   </div>
                   
-                  <Button 
-                    variant="outline"
-                    className="w-full btn-touch btn-secondary"
-                    onClick={() => setShowTemplates(!showTemplates)}
-                    disabled={templatesLoading}
-                  >
-                    <Star className="mr-3 h-5 w-5" />
-                    {templatesLoading ? (
-                      <>
-                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                        Loading Templates...
-                      </>
-                    ) : templatesError ? (
-                      <>Error Loading Templates</>
-                    ) : (
-                      <>Choose a Template {Array.isArray(templates) ? `(${templates.length})` : ''}</>
-                    )}
-                  </Button>
-
                   <Button 
                     variant="outline"
                     className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
@@ -368,60 +424,98 @@ export default function CakeBuilder() {
                   >
                     👨‍👦 Father's Day Special Cake
                   </Button>
-                </div>
 
-                {showTemplates && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mt-6"
-                  >
-                    {templatesLoading && (
-                      <div className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="mt-2 text-sm text-neutral-500">Loading templates...</p>
+                  {/* GENERAL TEMPLATES - FEATURE FLAG CONTROLLED */}
+                  {featureFlags.templates.showTemplateSection && (
+                    <>
+                      <Separator />
+                      
+                      <div className="text-center text-sm text-neutral-500">
+                        Or choose from our templates
                       </div>
-                    )}
-                    
-                    {templatesError && (
-                      <div className="text-center py-8">
-                        <p className="text-red-600 text-sm">Failed to load templates</p>
-                        <p className="text-xs text-neutral-500 mt-1">Error: {templatesError.message}</p>
-                        <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.reload()}>
-                          Retry
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {!templatesLoading && !templatesError && Array.isArray(templates) && templates.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {templates.map((template: any) => (
-                          <Card 
-                            key={template.id}
-                            className="cursor-pointer hover:shadow-lg transition-shadow"
-                            onClick={() => handleTemplateSelect(template)}
+                      
+                      <Button 
+                        variant="outline"
+                        className="w-full btn-touch btn-secondary"
+                        onClick={() => setShowTemplates(!showTemplates)}
+                        disabled={templatesLoading}
+                      >
+                        <Star className="mr-3 h-5 w-5" />
+                        {templatesLoading ? (
+                          <>
+                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                            Loading Templates...
+                          </>
+                        ) : templatesError ? (
+                          <>Error Loading Templates</>
+                        ) : (
+                          <>Choose a Template {Array.isArray(templates) ? `(${templates.length})` : ''}</>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                  
+                  {/* TEMPLATE DISPLAY - FEATURE FLAG CONTROLLED */}
+                  {featureFlags.templates.showTemplateSection && showTemplates && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4 mt-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200 shadow-inner">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-semibold text-purple-800">Choose Your Template</h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowTemplates(false)}
+                            className="text-purple-600 hover:text-purple-800"
                           >
-                            <CardContent className="p-4">
-                              <img 
-                                src={`https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=120`}
-                                alt={template.name}
-                                className="w-full h-20 object-cover rounded-lg mb-2"
-                              />
-                              <h3 className="font-semibold text-center text-sm">{template.name}</h3>
-                            </CardContent>
-                          </Card>
-                        ))}
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {templatesError ? (
+                          <div className="text-red-600 text-center py-4">
+                            Failed to load templates. Please try again later.
+                          </div>
+                        ) : Array.isArray(templates) && templates.length > 0 ? (
+                          <div className="grid gap-3">
+                            {templates.map((template) => (
+                              <div
+                                key={template.id}
+                                className="p-3 bg-white rounded-lg border border-purple-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-purple-300"
+                                onClick={() => handleTemplateSelect(template)}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h5 className="font-medium text-purple-800">{template.name}</h5>
+                                    <p className="text-sm text-purple-600 capitalize">{template.category.replace('-', ' ')}</p>
+                                    <p className="text-xs text-neutral-600 mt-1">
+                                      {template.layers} layer • {template.shape} • {template.servings} servings
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-medium text-purple-800">
+                                      ₱{(template.basePrice / 100).toFixed(2)}
+                                    </p>
+                                    <p className="text-xs text-neutral-500">base price</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-neutral-600">
+                            No templates available
+                          </div>
+                        )}
                       </div>
-                    )}
-                    
-                    {!templatesLoading && !templatesError && (!templates || !Array.isArray(templates) || templates.length === 0) && (
-                      <div className="text-center py-8">
-                        <p className="text-neutral-500 text-sm">No templates available</p>
-                        <p className="text-xs text-neutral-400 mt-1">Templates data: {JSON.stringify(templates)}</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
+                    </motion.div>
+                  )}
+                </div>
               </motion.div>
             )}
 
@@ -436,9 +530,9 @@ export default function CakeBuilder() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Build Your Layers
+                <div className="mb-6 text-center">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    🧁 Build Your Layers
                   </h2>
                   <p className="text-neutral-500">Add layers and choose your cake shape</p>
                 </div>
@@ -447,11 +541,11 @@ export default function CakeBuilder() {
 
                 <Card>
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-semibold text-lg">
                         Layers ({cakeConfig.layers}/3)
                       </h3>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Button
                           size="sm"
                           variant="outline"
@@ -460,9 +554,9 @@ export default function CakeBuilder() {
                             flavors: cakeConfig.flavors.slice(0, -1)
                           })}
                           disabled={cakeConfig.layers <= 1}
-                          className="w-10 h-10 rounded-full"
+                          className="w-12 h-12 rounded-full border-2 hover:border-red-300 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-5 w-5" />
                         </Button>
                         <Button
                           size="sm"
@@ -471,40 +565,82 @@ export default function CakeBuilder() {
                             flavors: [...cakeConfig.flavors, "chocolate"]
                           })}
                           disabled={cakeConfig.layers >= 3}
-                          className="w-10 h-10 rounded-full bg-green-500 hover:bg-green-600"
+                          className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
+                    
+                  {/* Centered Layer Information */}
+                  <div className="flex justify-center mb-4">
+                    <div className="flex items-center text-center py-3 px-6 bg-gray-50 rounded-lg border">
+                      {/* Shape Icon */}
+                      <div className="mr-3">
+                        {cakeConfig.shape === 'round' && (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 border-2 border-pink-600 shadow-sm flex items-center justify-center">
+                            <div className="w-3 h-3 rounded-full bg-white/30"></div>
+                          </div>
+                        )}
+                        {cakeConfig.shape === 'square' && (
+                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 border-2 border-blue-600 shadow-sm flex items-center justify-center">
+                            <div className="w-3 h-3 rounded-sm bg-white/30"></div>
+                          </div>
+                        )}
+                        {cakeConfig.shape === 'heart' && (
+                          <div className="text-2xl">💖</div>
+                        )}
+                      </div>
+                      
+                      {/* Text Content */}
+                      <div>
+                        <div className="text-lg font-bold text-gray-800 mb-1">
+                          {cakeConfig.layers} Layer{cakeConfig.layers > 1 ? 's' : ''}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {cakeConfig.shape.charAt(0).toUpperCase() + cakeConfig.shape.slice(1)} Shape
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4">Choose Shape</h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { id: "round", name: "Round", icon: "⭕" },
-                        { id: "square", name: "Square", icon: "⬜" },
-                        { id: "heart", name: "Heart", icon: "💖" },
-                      ].map((shape) => (
-                        <Button
-                          key={shape.id}
-                          variant={cakeConfig.shape === shape.id ? "default" : "outline"}
-                          className="h-16 flex-col"
-                          onClick={() => updateConfig({ shape: shape.id as any })}
-                        >
-                          <span className="text-2xl mb-1">{shape.icon}</span>
-                          <span className="text-sm">{shape.name}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <ImprovedSelectionCard
+                  title="Choose Shape"
+                  items={[
+                    { 
+                      id: "round", 
+                      name: "Round", 
+                      icon: (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-pink-500 border-2 border-pink-600 shadow-sm flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-white/30"></div>
+                        </div>
+                      )
+                    },
+                    { 
+                      id: "square", 
+                      name: "Square", 
+                      icon: (
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 border-2 border-blue-600 shadow-sm flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-sm bg-white/30"></div>
+                        </div>
+                      )
+                    },
+                    { 
+                      id: "heart", 
+                      name: "Heart", 
+                      icon: "💖"
+                    }
+                  ]}
+                  selectedItems={cakeConfig.shape}
+                  onSelectionChange={(shapeId) => updateConfig({ shape: shapeId as any })}
+                  multiple={false}
+                  columns={3}
+                />
 
                 <Button className="w-full btn-touch btn-primary mb-32" onClick={nextStep}>
-                  Continue to Flavors
+                  🧁 Continue to Flavors
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -521,9 +657,9 @@ export default function CakeBuilder() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Choose Flavors
+                <div className="mb-6 text-center">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    🍰 Choose Flavors
                   </h2>
                   <p className="text-neutral-500">Select flavors for each layer</p>
                 </div>
@@ -544,7 +680,7 @@ export default function CakeBuilder() {
                 ))}
 
                 <Button className="w-full btn-touch btn-primary mb-32" onClick={nextStep}>
-                  Continue to Icing
+                  🍰 Continue to Icing
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -561,9 +697,9 @@ export default function CakeBuilder() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Icing & Decorations
+                <div className="mb-6 text-center">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    🎨 Icing & Decorations
                   </h2>
                   <p className="text-neutral-500">Choose colors, icing type, and decorations</p>
                 </div>
@@ -573,11 +709,27 @@ export default function CakeBuilder() {
                 <Card>
                   <CardContent className="p-6">
                     <h3 className="font-semibold mb-4">Icing Color</h3>
-                    <ColorPalette
-                      colors={COLOR_PALETTE}
-                      selectedColor={cakeConfig.icingColor}
-                      onColorSelect={(color) => updateConfig({ icingColor: color })}
-                    />
+                    <div className="grid grid-cols-4 gap-4">
+                      {SIMPLIFIED_COLOR_PALETTE.map((color) => (
+                        <button
+                          key={color.id}
+                          onClick={() => updateConfig({ icingColor: color.hex })}
+                          className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all hover:scale-105 ${
+                            cakeConfig.icingColor === color.hex
+                              ? "border-primary bg-primary/5 scale-105"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div
+                            className="w-12 h-12 rounded-lg border-2 border-white shadow-md mb-2"
+                            style={{ backgroundColor: color.hex }}
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            {color.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -607,7 +759,7 @@ export default function CakeBuilder() {
                 />
 
                 <Button className="w-full btn-touch btn-primary mb-32" onClick={nextStep}>
-                  Continue to Message
+                  🎨 Continue to Message
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -624,9 +776,9 @@ export default function CakeBuilder() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Add Your Message
+                <div className="mb-6 text-center">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    💌 Add Your Message
                   </h2>
                   <p className="text-neutral-500">Personalize your cake with text and photos</p>
                 </div>
@@ -653,7 +805,7 @@ export default function CakeBuilder() {
                 </Card>
 
                 <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
-                  Continue to Dietary Options
+                  💌 Continue to Dietary Options
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -671,8 +823,8 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Dietary Preferences
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    🌱 Dietary Preferences
                   </h2>
                   <p className="text-neutral-500">Select any dietary requirements or allergen restrictions</p>
                 </div>
@@ -743,7 +895,7 @@ export default function CakeBuilder() {
                 </Card>
 
                 <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
-                  Continue to Size
+                  📏 Continue to Size & Servings
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -761,8 +913,8 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Size & Servings
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    📏 Size & Servings
                   </h2>
                   <p className="text-neutral-500">Choose the perfect size for your occasion</p>
                 </div>
@@ -923,7 +1075,7 @@ export default function CakeBuilder() {
                 )}
 
                 <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
-                  Review & Order
+                  📞 Continue to Contact Info
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
@@ -941,8 +1093,8 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Almost Done!
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    🎉 Almost Done!
                   </h2>
                   <p className="text-neutral-500">Enter your contact details to complete your order</p>
                 </div>
@@ -966,8 +1118,8 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-neutral-900 font-heading mb-2">
-                    Order Summary
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    📋 Order Summary
                   </h2>
                   <p className="text-neutral-500">Review your custom cake before placing your order</p>
                 </div>
@@ -1147,8 +1299,8 @@ export default function CakeBuilder() {
                           <span className="text-gray-600">
                             Decorations: {cakeConfig.decorations.map(d => 
                               d === 'flowers' ? 'Flowers' :
-                              d === 'gold' ? 'Gold leaf' :
-                              d === 'fruit' ? 'Fresh fruit' :
+                              d === 'gold-leaf' ? 'Gold leaf' :
+                              d === 'fresh-fruit' ? 'Fresh fruit' :
                               d === 'sprinkles' ? 'Sprinkles' :
                               d === 'happy-birthday' ? 'Birthday topper' :
                               d === 'anniversary' ? 'Anniversary topper' : d
@@ -1239,7 +1391,7 @@ export default function CakeBuilder() {
                     onClick={handleOrderConfirm}
                     disabled={createOrderMutation.isPending}
                   >
-                    {createOrderMutation.isPending ? "Placing Order..." : "Confirm & Place Order"}
+                    {createOrderMutation.isPending ? "🎂 Placing Order..." : "🎉 Confirm & Place Order"}
                   </Button>
                   
                   <Button 
