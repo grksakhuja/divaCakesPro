@@ -7,6 +7,7 @@ import { z } from "zod";
 import path from "path";
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { isTemplateApiEnabled, featureFlags } from "./feature-flags";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -95,8 +96,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // FEATURE FLAGS API - PUBLIC ENDPOINT
+  // Get current feature flag configuration (for frontend)
+  app.get("/api/feature-flags", (req, res) => {
+    try {
+      res.json({
+        templates: {
+          showTemplateSection: featureFlags.templates.showTemplateSection,
+          enableTemplateApi: featureFlags.templates.enableTemplateApi,
+          enableTemplateSeeding: featureFlags.templates.enableTemplateSeeding,
+        }
+      });
+    } catch (error) {
+      console.error("Error serving feature flags:", error);
+      res.status(500).json({ message: "Failed to fetch feature flags" });
+    }
+  });
+
+  // TEMPLATE API ROUTES - FEATURE FLAG CONTROLLED
   // Get all cake templates
   app.get("/api/templates", async (req, res) => {
+    if (!isTemplateApiEnabled()) {
+      return res.status(404).json({ message: "Template API is currently disabled" });
+    }
+    
     try {
       const templates = await storage.getCakeTemplates();
       res.json(templates);
@@ -107,6 +130,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get templates by category
   app.get("/api/templates/:category", async (req, res) => {
+    if (!isTemplateApiEnabled()) {
+      return res.status(404).json({ message: "Template API is currently disabled" });
+    }
+    
     try {
       const { category } = req.params;
       const templates = await storage.getCakeTemplatesByCategory(category);

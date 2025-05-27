@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { ReactNode } from "react";
 
 interface SelectionItem {
   id: string;
   name: string;
   image?: string;
-  icon?: string;
+  icon?: string | ReactNode;
   price?: number;
   description?: string;
   premium?: boolean;
@@ -19,7 +20,7 @@ interface ImprovedSelectionCardProps {
   selectedItems: string | string[];
   onSelectionChange: (itemId: string) => void;
   multiple?: boolean;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
 }
 
 export default function ImprovedSelectionCard({
@@ -36,7 +37,11 @@ export default function ImprovedSelectionCard({
       : selectedItems === itemId;
   };
 
-  const gridClass = columns === 1 ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-4";
+  const gridClass = columns === 1 
+    ? "grid grid-cols-1 gap-4" 
+    : columns === 3 
+    ? "grid grid-cols-3 gap-4" 
+    : "grid grid-cols-2 gap-4";
 
   return (
     <Card>
@@ -64,7 +69,13 @@ export default function ImprovedSelectionCard({
                     className="w-full h-16 object-cover rounded-lg mb-3"
                   />
                 ) : item.icon ? (
-                  <span className="text-3xl mb-3">{item.icon}</span>
+                  <div className="mb-3">
+                    {typeof item.icon === 'string' ? (
+                      <span className="text-3xl">{item.icon}</span>
+                    ) : (
+                      item.icon
+                    )}
+                  </div>
                 ) : null}
                 
                 <div className="text-center space-y-2">
