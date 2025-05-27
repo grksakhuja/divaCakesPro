@@ -152,6 +152,18 @@ var DatabaseStorage = class {
     const [order] = await db.update(cakeOrders).set({ status }).where(eq(cakeOrders.id, id)).returning();
     return order || void 0;
   }
+  async deleteCakeOrder(id) {
+    const result = await db.delete(cakeOrders).where(eq(cakeOrders.id, id));
+    return result.rowCount > 0;
+  }
+  async deleteAllCakeOrders() {
+    const ordersBefore = await db.select().from(cakeOrders);
+    const count = ordersBefore.length;
+    if (count > 0) {
+      await db.delete(cakeOrders);
+    }
+    return count;
+  }
   async getCakeTemplates() {
     return await db.select().from(cakeTemplates);
   }
@@ -432,6 +444,59 @@ async function registerRoutes(app2) {
     } catch (err) {
       console.error("Error serving pricing structure:", err);
       res.status(500).json({ error: "Could not load pricing structure" });
+    }
+  });
+  app2.delete("/api/orders/:id", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace("Bearer ", "") || req.headers["x-admin-session"];
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const session2 = activeSessions.get(sessionToken);
+      if (!session2) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      if (Date.now() - session2.timestamp > 24 * 60 * 60 * 1e3) {
+        activeSessions.delete(sessionToken);
+        return res.status(401).json({ message: "Session expired" });
+      }
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      console.log(`\u{1F5D1}\uFE0F Admin ${session2.username} deleting order #${id}`);
+      const deleted = await storage.deleteCakeOrder(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      console.log(`\u2705 Successfully deleted order #${id}`);
+      res.json({ message: "Order deleted successfully", orderId: id });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      res.status(500).json({ message: "Failed to delete order" });
+    }
+  });
+  app2.delete("/api/orders", async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace("Bearer ", "") || req.headers["x-admin-session"];
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const session2 = activeSessions.get(sessionToken);
+      if (!session2) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      console.log("\u{1F5D1}\uFE0F Admin deleting all orders - user:", session2.username);
+      const deletedCount = await storage.deleteAllCakeOrders();
+      res.json({
+        message: `Successfully deleted ${deletedCount} orders`,
+        deletedCount
+      });
+    } catch (error) {
+      console.error("Error deleting all orders:", error);
+      res.status(500).json({ message: "Failed to delete orders" });
     }
   });
   const httpServer = createServer(app2);

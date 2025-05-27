@@ -10,6 +10,9 @@ export interface IStorage {
   createCakeOrder(order: InsertCakeOrder): Promise<CakeOrder>;
   updateCakeOrderStatus(id: number, status: string): Promise<CakeOrder | undefined>;
   
+  deleteCakeOrder(id: number): Promise<boolean>;
+  deleteAllCakeOrders(): Promise<number>;
+  
   getCakeTemplates(): Promise<CakeTemplate[]>;
   getCakeTemplatesByCategory(category: string): Promise<CakeTemplate[]>;
   createCakeTemplate(template: InsertCakeTemplate): Promise<CakeTemplate>;
@@ -135,6 +138,16 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
+  async deleteCakeOrder(id: number): Promise<boolean> {
+    return this.cakeOrders.delete(id);
+  }
+
+  async deleteAllCakeOrders(): Promise<number> {
+    const count = this.cakeOrders.size;
+    this.cakeOrders.clear();
+    return count;
+  }
+
   async getCakeTemplates(): Promise<CakeTemplate[]> {
     return Array.from(this.cakeTemplates.values());
   }
@@ -232,6 +245,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(cakeOrders.id, id))
       .returning();
     return order || undefined;
+  }
+
+  async deleteCakeOrder(id: number): Promise<boolean> {
+    const result = await db.delete(cakeOrders).where(eq(cakeOrders.id, id));
+    return result.rowCount > 0;
+  }
+
+  async deleteAllCakeOrders(): Promise<number> {
+    const ordersBefore = await db.select().from(cakeOrders);
+    const count = ordersBefore.length;
+    
+    if (count > 0) {
+      await db.delete(cakeOrders);
+    }
+    
+    return count;
   }
 
   async getCakeTemplates(): Promise<CakeTemplate[]> {
