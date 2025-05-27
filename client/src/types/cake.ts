@@ -58,7 +58,7 @@ export interface DecorationOption {
   id: string;
   name: string;
   image: string;
-  price: number;
+  premium?: boolean;
 }
 
 export interface ColorOption {
@@ -107,37 +107,34 @@ export const DECORATION_OPTIONS: DecorationOption[] = [
     id: "sprinkles",
     name: "Sprinkles",
     image: "https://images.unsplash.com/photo-1599785209707-a456fc1337bb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=60",
-    price: 500,
   },
   {
     id: "flowers",
     name: "Flowers",
     image: "https://images.unsplash.com/photo-1557925923-cd4648e211a0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=60",
-    price: 1500,
+    premium: true,
   },
   {
-    id: "fruit",
+    id: "fresh-fruit",
     name: "Fresh Fruit",
     image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=60",
-    price: 1200,
+    premium: true,
   },
   {
-    id: "gold",
+    id: "gold-leaf",
     name: "Gold Leaf",
     image: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&h=60",
-    price: 1500,
+    premium: true,
   },
   {
     id: "happy-birthday",
     name: "Happy Birthday Topper",
     image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&h=60",
-    price: 700,
   },
   {
     id: "anniversary",
     name: "Anniversary Topper", 
     image: "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&h=60",
-    price: 700,
   },
 ];
 
@@ -162,3 +159,15 @@ export const DIETARY_OPTIONS = [
 ];
 
 export const DIETARY_NOTE = "All cakes are nut-free but may contain dairy and gluten";
+
+// Helper function to enhance decoration options with pricing
+export const getDecorationOptionsWithPricing = (pricingStructure: any): (DecorationOption & { price: number })[] => {
+  if (!pricingStructure?.decorationPrices) {
+    return DECORATION_OPTIONS.map(option => ({ ...option, price: 0 }));
+  }
+  
+  return DECORATION_OPTIONS.map(option => ({
+    ...option,
+    price: pricingStructure.decorationPrices[option.id] || 0
+  }));
+};
