@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { useCakeBuilder } from "@/lib/cake-builder-store";
 
 const stepTitles = [
-  "Welcome",
-  "Build Layers", 
-  "Choose Flavors",
-  "Icing & Decorations",
-  "Add Message",
-  "Dietary Options",
-  "Size & Servings",
-  "Contact Info",
-  "Order Summary",
+  "🍰 Welcome",
+  "🧁 Build Layers", 
+  "🍰 Choose Flavors",
+  "🎨 Icing & Decorations",
+  "💌 Add Message",
+  "🌱 Dietary Options",
+  "📏 Size & Servings",
+  "🎉 Contact Info",
+  "📋 Order Summary",
 ];
 
 export default function ProgressIndicator() {
@@ -33,7 +33,7 @@ export default function ProgressIndicator() {
             <ArrowLeft className="h-5 w-5 text-neutral-500" />
           </Button>
           
-          <div className="text-sm font-medium text-neutral-500 font-heading">
+          <div className="text-sm font-medium text-neutral-500">
             {stepTitles[currentStep - 1]}
           </div>
           
@@ -48,7 +48,7 @@ export default function ProgressIndicator() {
               <RotateCcw className="h-4 w-4" />
             </Button>
             <div className="text-sm text-neutral-500">
-              {currentStep} of 8
+              {currentStep} of 9
             </div>
           </div>
         </div>
