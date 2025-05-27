@@ -11,9 +11,17 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Read pricing structure from JSON file (single source of truth)
-const pricingStructurePath = path.join(__dirname, 'pricing-structure.json');
-const pricingStructure = JSON.parse(fs.readFileSync(pricingStructurePath, 'utf-8'));
+// Helper function to read pricing structure fresh each time (for live updates)
+function getPricingStructure() {
+  try {
+    // When built, this runs from dist/index.js, so we need to look in dist/server/
+    const pricingStructurePath = path.join(__dirname, 'server', 'pricing-structure.json');
+    return JSON.parse(fs.readFileSync(pricingStructurePath, 'utf-8'));
+  } catch (error) {
+    console.error('Error reading pricing structure:', error);
+    throw new Error('Failed to load pricing structure');
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -204,15 +212,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate pricing endpoint - now reads from pricing-structure.json
+  // Calculate pricing endpoint - now reads from pricing-structure.json dynamically
   app.post("/api/calculate-price", async (req, res) => {
     try {
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
 
       // Special pricing for Father's Day template
       if (template === "fathers-day" || template === "999" || template === 999) {
+        // Get fresh pricing structure for Father's Day template
+        const pricingStructure = getPricingStructure();
+        const fathersDayPrice = pricingStructure.basePrices["6inch"]; // Use 6-inch price for Father's Day template
+        
         return res.json({
-          basePrice: 8000,
+          basePrice: fathersDayPrice,
           layerPrice: 0,
           flavorPrice: 0,
           shapePrice: 0,
@@ -221,9 +233,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dietaryUpcharge: 0,
           photoPrice: 0,
           cakeQuantity: 1,
-          totalPrice: 8000,
+          totalPrice: fathersDayPrice,
           breakdown: {
-            base: 8000,
+            base: fathersDayPrice,
             layers: 0,
             flavors: 0,
             shape: 0,
@@ -234,6 +246,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
       }
+
+      // Get fresh pricing structure for this request
+      const pricingStructure = getPricingStructure();
 
       // Convert to numbers and ensure valid quantities
       const sixInch = Math.max(0, parseInt(String(sixInchCakes)) || 0);
@@ -321,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve pricing structure for frontend
   app.get("/api/pricing-structure", (req, res) => {
     try {
-      res.json(pricingStructure);
+      res.json(getPricingStructure());
     } catch (err) {
       console.error("Error serving pricing structure:", err);
       res.status(500).json({ error: "Could not load pricing structure" });
