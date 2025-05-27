@@ -4,13 +4,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCakeOrderSchema } from "@shared/schema";
 import { z } from "zod";
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
-import { pricingStructure } from "./pricing-data";
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Read pricing structure from JSON file (single source of truth)
+const pricingStructurePath = path.join(__dirname, 'pricing-structure.json');
+const pricingStructure = JSON.parse(fs.readFileSync(pricingStructurePath, 'utf-8'));
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -204,7 +207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calculate pricing endpoint - now reads from pricing-structure.json
   app.post("/api/calculate-price", async (req, res) => {
     try {
-      const pricing = pricingStructure;
       const { layers = 1, decorations = [], icingType = "butter", dietaryRestrictions = [], flavors = [], shape = "round", template, sixInchCakes = 0, eightInchCakes = 0 } = req.body;
 
       // Special pricing for Father's Day template
@@ -242,23 +244,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Base pricing
-      const basePrice = (sixInch * pricing.basePrices["6inch"]) + (eightInch * pricing.basePrices["8inch"]);
+      const basePrice = (sixInch * pricingStructure.basePrices["6inch"]) + (eightInch * pricingStructure.basePrices["8inch"]);
 
       // Layer pricing (additional layers for each cake)
-      const layerPrice = Math.max(0, layers - 1) * pricing.layerPrice * totalCakes;
+      const layerPrice = Math.max(0, layers - 1) * pricingStructure.layerPrice * totalCakes;
 
       // Flavor pricing
       let flavorPrice = 0;
       if (Array.isArray(flavors)) {
         flavors.forEach((flavor) => {
           const key = String(flavor).replace(/\s+/g, '-').toLowerCase();
-          flavorPrice += pricing.flavorPrices[key] || 0;
+          flavorPrice += pricingStructure.flavorPrices[key] || 0;
         });
       }
       flavorPrice *= totalCakes;
 
       // Shape pricing
-      let shapePrice = pricing.shapePrices[shape] || 0;
+      let shapePrice = pricingStructure.shapePrices[shape] || 0;
       shapePrice *= totalCakes;
 
       // Decoration pricing
@@ -266,21 +268,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (Array.isArray(decorations)) {
         decorations.forEach((decoration) => {
           const key = String(decoration).replace(/\s+/g, '-').toLowerCase();
-          decorationTotal += pricing.decorationPrices[key] || 0;
+          decorationTotal += pricingStructure.decorationPrices[key] || 0;
         });
       }
       decorationTotal *= totalCakes;
 
       // Icing type pricing
       const icingKey = String(icingType).replace(/\s+/g, '-').toLowerCase();
-      const icingPrice = (pricing.icingTypes[icingKey] || 0) * totalCakes;
+      const icingPrice = (pricingStructure.icingTypes[icingKey] || 0) * totalCakes;
 
       // Dietary restrictions upcharge
       let dietaryUpcharge = 0;
       if (Array.isArray(dietaryRestrictions)) {
         dietaryRestrictions.forEach((restriction) => {
           const key = String(restriction).replace(/\s+/g, '-').toLowerCase();
-          dietaryUpcharge += pricing.dietaryPrices[key] || 0;
+          dietaryUpcharge += pricingStructure.dietaryPrices[key] || 0;
         });
       }
       dietaryUpcharge *= totalCakes;

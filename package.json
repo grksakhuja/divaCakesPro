@@ -8,6 +8,10 @@
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
+    "test": "node run-all-tests.js",
+    "test:all": "node run-all-tests.js",
+    "test:smart": "node smart-pricing-test.js",
+    "test:basic": "node test-pricing.js",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx server/seed.ts",
     "postbuild": "mkdir -p dist/server && cp server/pricing-structure.json dist/server/pricing-structure.json"
