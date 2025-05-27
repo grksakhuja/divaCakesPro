@@ -4,11 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { Package, Phone, Mail, MapPin, Clock, CheckCircle, LogOut } from "lucide-react";
+import { Package, Phone, Mail, MapPin, Clock, CheckCircle, LogOut, Trash2, AlertTriangle, User, RotateCcw } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Order {
   id: number;
@@ -74,6 +90,95 @@ export default function AdminOrders() {
     enabled: isAuthenticated === true, // Only fetch when authenticated
   });
 
+  // Update order status mutation
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ orderId, newStatus }: { orderId: number, newStatus: string }) => {
+      const token = getSessionToken();
+      if (!token) {
+        throw new Error("No authentication token");
+      }
+      
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Admin-Session': token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update order status");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data, { newStatus }) => {
+      toast({
+        title: "Status updated",
+        description: `Order #${data.id} status updated to ${newStatus}`,
+      });
+      refetch(); // Refresh the orders list
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete specific order mutation
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      const token = getSessionToken();
+      if (!token) {
+        throw new Error("No authentication token");
+      }
+      
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Admin-Session': token
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete order");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Order deleted",
+        description: `Order #${data.orderId} has been deleted successfully`,
+      });
+      refetch(); // Refresh the orders list
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDeleteOrder = (orderId: number) => {
+    deleteOrderMutation.mutate(orderId);
+  };
+
+  const handleStatusToggle = (orderId: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'pending' ? 'picked up' : 'pending';
+    updateOrderStatusMutation.mutate({ orderId, newStatus });
+  };
+
   const handleLogout = () => {
     logout();
     toast({
@@ -113,6 +218,7 @@ export default function AdminOrders() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'picked up': return 'bg-green-100 text-green-800';
       case 'confirmed': return 'bg-blue-100 text-blue-800';
       case 'in-progress': return 'bg-purple-100 text-purple-800';
       case 'ready': return 'bg-green-100 text-green-800';
@@ -163,13 +269,78 @@ export default function AdminOrders() {
                         {formatDistanceToNow(new Date(order.orderDate), { addSuffix: true })}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <Badge className={getStatusColor(order.status)}>
                         {order.status}
                       </Badge>
-                      <Badge variant="outline">
-                        {order.deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}
-                      </Badge>
+                      
+                      {/* Status Toggle Button with Tooltip */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleStatusToggle(order.id, order.status)}
+                            disabled={updateOrderStatusMutation.isPending}
+                            className={order.status === 'pending' ? 
+                              "text-green-600 hover:text-green-700 hover:bg-green-50" : 
+                              "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                            }
+                          >
+                            {order.status === 'pending' ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : (
+                              <RotateCcw className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {order.status === 'pending' 
+                              ? 'Mark as picked up' 
+                              : 'Mark as pending'
+                            }
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      
+                      {/* Delete Button with Confirmation Dialog */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={deleteOrderMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-red-500" />
+                              Delete Order #{order.id}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this order? This action cannot be undone.
+                              <br /><br />
+                              <strong>Customer:</strong> {order.customerName}<br />
+                              <strong>Total:</strong> {formatPrice(order.totalPrice)}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteOrder(order.id)}
+                              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                              disabled={deleteOrderMutation.isPending}
+                            >
+                              {deleteOrderMutation.isPending ? "Deleting..." : "Delete Order"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>
@@ -178,19 +349,24 @@ export default function AdminOrders() {
                   {/* Customer Info */}
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Customer Details
+                      <User className="w-4 h-4" />
+                      Customer Information
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                      <div><strong>Name:</strong> {order.customerName}</div>
-                      <div><strong>Email:</strong> {order.customerEmail}</div>
-                      <div><strong>Phone:</strong> {order.customerPhone}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        {order.customerEmail}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        {order.customerPhone || 'Not provided'}
+                      </div>
                     </div>
                   </div>
 
                   {/* Cake Details */}
                   <div className="bg-pink-50 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2">Cake Specifications</h3>
+                    <h3 className="font-semibold mb-2">Cake Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       <div><strong>Size:</strong> {order.sixInchCakes}×6" + {order.eightInchCakes}×8" cake{(order.sixInchCakes + order.eightInchCakes) > 1 ? 's' : ''}</div>
                       <div><strong>Layers:</strong> {order.layers}</div>
@@ -221,13 +397,11 @@ export default function AdminOrders() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No orders yet</h3>
-              <p className="text-gray-500">Orders will appear here when customers place them</p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No orders found</h3>
+            <p className="text-gray-500">Orders will appear here when customers place them.</p>
+          </div>
         )}
       </div>
     </div>
