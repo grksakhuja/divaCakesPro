@@ -10,6 +10,7 @@ import { isTemplateSeedingEnabled } from "./feature-flags";
 
 // Initialize seeding immediately
 console.log("🚀 Starting server initialization...");
+console.log('BREVO_API_KEY:', process.env.BREVO_API_KEY); // Add this line before initializing Brevo
 
 const CAKE_TEMPLATES = [
   {

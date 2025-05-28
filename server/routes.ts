@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { isTemplateApiEnabled, featureFlags } from "./feature-flags";
+import { sendOrderEmails } from './email-service';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -184,6 +185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Validated data:", validatedData);
       const order = await storage.createCakeOrder(validatedData);
       console.log("Created order:", order);
+      
+      // Send email notifications
+      await sendOrderEmails(order);
+      
       res.status(201).json(order);
     } catch (error) {
       console.error("Error creating order:", error);
