@@ -9,9 +9,53 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { isTemplateApiEnabled, featureFlags } from "./feature-flags";
 import { sendOrderEmails } from './email-service';
+import { touchNGoService } from './payment-service';
+import { mockTouchNGoService } from './mock-payment-service';
+import { DEMO_MODE } from './demo-config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Mock payment storage for demo mode
+const mockPaymentStore = new Map<string, any>();
+const mockOrderPayments = new Map<number, any>();
+
+// Helper functions for demo mode
+function createMockPayment(data: any) {
+  const payment = {
+    id: Date.now(),
+    ...data,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  mockPaymentStore.set(data.paymentId, payment);
+  mockOrderPayments.set(data.orderId, payment);
+  return payment;
+}
+
+function getMockPaymentByPaymentId(paymentId: string) {
+  return mockPaymentStore.get(paymentId);
+}
+
+function getMockPaymentByOrderId(orderId: number) {
+  return mockOrderPayments.get(orderId);
+}
+
+function updateMockPaymentStatus(paymentId: string, status: string, webhookData?: any) {
+  const payment = mockPaymentStore.get(paymentId);
+  if (payment) {
+    const updatedPayment = {
+      ...payment,
+      status,
+      webhookData,
+      updatedAt: new Date().toISOString(),
+    };
+    mockPaymentStore.set(paymentId, updatedPayment);
+    mockOrderPayments.set(payment.orderId, updatedPayment);
+    return updatedPayment;
+  }
+  return null;
+}
 
 // Helper function to read pricing structure fresh each time (for live updates)
 function getPricingStructure() {
@@ -464,6 +508,226 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error deleting all orders:", error);
       res.status(500).json({ message: "Failed to delete orders" });
     }
+  });
+
+  // PAYMENT ROUTES
+  
+  // Create payment for an order
+  app.post("/api/orders/:id/payment", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+
+      const order = await storage.getCakeOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Check if payment already exists for this order
+      const existingPayment = DEMO_MODE 
+        ? getMockPaymentByOrderId(orderId)
+        : await storage.getPaymentByOrderId(orderId);
+        
+      if (existingPayment && existingPayment.status !== 'failed' && existingPayment.status !== 'cancelled') {
+        return res.status(400).json({ 
+          message: "Payment already exists for this order",
+          paymentId: existingPayment.paymentId,
+          status: existingPayment.status
+        });
+      }
+
+      // Use mock or real payment service based on demo mode
+      const paymentService = DEMO_MODE ? mockTouchNGoService : touchNGoService;
+      
+      console.log(DEMO_MODE ? '🧪 DEMO MODE: Creating mock payment' : '💳 LIVE MODE: Creating real payment');
+
+      // Create payment with Touch 'n Go (or mock)
+      const paymentRequest = {
+        orderId: order.id.toString(),
+        amount: order.totalPrice / 100, // Convert from cents to MYR
+        currency: 'MYR',
+        description: `Custom Cake Order #${order.id}`,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        customerPhone: order.customerPhone || '',
+        redirectUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/payment/success?orderId=${order.id}`,
+        callbackUrl: `${process.env.BASE_URL || 'http://localhost:5000'}/api/payments/webhook`,
+      };
+
+      const paymentResult = await paymentService.createPayment(paymentRequest);
+      
+      if (!paymentResult.success) {
+        return res.status(500).json({ 
+          message: "Failed to create payment", 
+          error: paymentResult.error 
+        });
+      }
+
+      // Store payment in mock storage or database
+      const paymentData = {
+        orderId: order.id,
+        paymentMethod: 'touchngo',
+        paymentProvider: 'touchngo-ewallet',
+        paymentId: paymentResult.paymentId!,
+        amount: order.totalPrice,
+        currency: 'MYR',
+        status: 'pending',
+        providerResponse: paymentResult,
+      };
+
+      if (DEMO_MODE) {
+        createMockPayment(paymentData);
+        console.log('🧪 DEMO: Payment stored in mock storage');
+      } else {
+        await storage.createPayment(paymentData);
+        await storage.updateOrderPaymentStatus(
+          order.id, 
+          'pending', 
+          paymentResult.paymentId, 
+          paymentResult.paymentUrl
+        );
+      }
+
+      res.json({
+        success: true,
+        paymentId: paymentResult.paymentId,
+        paymentUrl: paymentResult.paymentUrl,
+        qrCode: paymentResult.qrCode,
+        expiresAt: paymentResult.expiresAt,
+        ...(DEMO_MODE && { demoMode: true, message: '🧪 This is a demo payment - no real money will be charged' })
+      });
+    } catch (error) {
+      console.error("Payment creation error:", error);
+      res.status(500).json({ message: "Failed to create payment" });
+    }
+  });
+
+  // Get payment status
+  app.get("/api/payments/:paymentId/status", async (req, res) => {
+    try {
+      const { paymentId } = req.params;
+      
+      // Get payment from mock storage or database
+      const payment = DEMO_MODE 
+        ? getMockPaymentByPaymentId(paymentId)
+        : await storage.getPaymentByPaymentId(paymentId);
+        
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
+      const paymentService = DEMO_MODE ? mockTouchNGoService : touchNGoService;
+      console.log(DEMO_MODE ? '🧪 DEMO MODE: Checking mock payment status' : '💳 LIVE MODE: Checking real payment status');
+
+      // Check status with Touch 'n Go (or mock) if payment is still pending
+      if (payment.status === 'pending' || payment.status === 'processing') {
+        try {
+          const statusResult = await paymentService.getPaymentStatus(paymentId);
+          
+          // Update payment status if it has changed
+          if (statusResult.status !== payment.status) {
+            if (DEMO_MODE) {
+              updateMockPaymentStatus(paymentId, statusResult.status, statusResult);
+              console.log(`🧪 DEMO: Payment status updated to ${statusResult.status}`);
+            } else {
+              await storage.updatePaymentStatus(paymentId, statusResult.status, statusResult);
+              
+              // Update order status if payment is completed
+              if (statusResult.status === 'success') {
+                await storage.updateOrderPaymentStatus(payment.orderId!, 'completed');
+              } else if (statusResult.status === 'failed') {
+                await storage.updateOrderPaymentStatus(payment.orderId!, 'failed');
+              }
+            }
+          }
+          
+          res.json({
+            paymentId,
+            status: statusResult.status,
+            amount: statusResult.amount,
+            transactionId: statusResult.transactionId,
+            ...(DEMO_MODE && { demoMode: true })
+          });
+        } catch (error) {
+          console.error("Error checking payment status:", error);
+          // Return cached status if API call fails
+          res.json({
+            paymentId,
+            status: payment.status,
+            amount: payment.amount / 100,
+            ...(DEMO_MODE && { demoMode: true })
+          });
+        }
+      } else {
+        // Return cached status for completed/failed payments
+        res.json({
+          paymentId,
+          status: payment.status,
+          amount: payment.amount / 100,
+          ...(DEMO_MODE && { demoMode: true })
+        });
+      }
+    } catch (error) {
+      console.error("Error getting payment status:", error);
+      res.status(500).json({ message: "Failed to get payment status" });
+    }
+  });
+
+  // Touch 'n Go webhook endpoint
+  app.post("/api/payments/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+    try {
+      const signature = req.headers['x-signature'] as string;
+      const payload = req.body.toString();
+      
+      const paymentService = DEMO_MODE ? mockTouchNGoService : touchNGoService;
+      console.log(DEMO_MODE ? '🧪 DEMO MODE: Processing mock webhook' : '🔍 LIVE MODE: Processing real webhook');
+      
+      // Verify webhook signature
+      if (!paymentService.verifyWebhookSignature(payload, signature)) {
+        console.error('Invalid webhook signature');
+        return res.status(401).json({ message: 'Invalid signature' });
+      }
+
+      const webhookData = paymentService.processWebhook(JSON.parse(payload));
+      
+      // Update payment status
+      if (DEMO_MODE) {
+        const payment = updateMockPaymentStatus(
+          webhookData.paymentId, 
+          webhookData.status,
+          webhookData
+        );
+        console.log(`🧪 DEMO: Webhook processed for payment ${webhookData.paymentId} - status: ${webhookData.status}`);
+      } else {
+        const payment = await storage.updatePaymentStatus(
+          webhookData.paymentId, 
+          webhookData.status,
+          webhookData
+        );
+        
+        if (payment) {
+          // Update order status based on payment status
+          if (webhookData.status === 'success') {
+            await storage.updateOrderPaymentStatus(payment.orderId!, 'completed');
+          } else if (webhookData.status === 'failed') {
+            await storage.updateOrderPaymentStatus(payment.orderId!, 'failed');
+          }
+        }
+      }
+      
+      res.json({ received: true, ...(DEMO_MODE && { demoMode: true }) });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ message: 'Webhook processing failed' });
+    }
+  });
+
+  // Payment success redirect page
+  app.get("/payment/success", (req, res) => {
+    const orderId = req.query.orderId;
+    res.redirect(`/?payment=success&orderId=${orderId}`);
   });
 
   const httpServer = createServer(app);

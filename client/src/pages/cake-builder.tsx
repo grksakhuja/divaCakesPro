@@ -35,6 +35,8 @@ import CakePreview from "@/components/cake-preview";
 import ColorPalette from "@/components/ui/color-palette";
 import RunningCost from "@/components/running-cost";
 import CustomerForm from "@/components/customer-form";
+import PaymentMethodSelector from "@/components/payment-method-selector";
+import PaymentProcessor from "@/components/payment-processor";
 import { 
   FLAVOR_OPTIONS, 
   DECORATION_OPTIONS, 
@@ -75,6 +77,8 @@ export default function CakeBuilder() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showTemplates, setShowTemplates] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'touchngo' | 'card'>('cash');
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   
   // Feature flags
   const { featureFlags } = useFeatureFlags();
@@ -130,17 +134,23 @@ export default function CakeBuilder() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Store order details for confirmation page
-      localStorage.setItem("latestOrder", JSON.stringify(data));
+      setCurrentOrderId(data.id);
       
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${data.id} has been received.`,
-      });
-      
-      // Redirect to confirmation page
-      setLocation("/order-confirmation");
-      resetBuilder();
+      // If cash payment, complete the order immediately
+      if (paymentMethod === 'cash') {
+        localStorage.setItem("latestOrder", JSON.stringify(data));
+        
+        toast({
+          title: "Order Placed Successfully!",
+          description: `Your order #${data.id} has been received.`,
+        });
+        
+        setLocation("/order-confirmation");
+        resetBuilder();
+      } else {
+        // For digital payments, move to payment step
+        nextStep(); // Go to payment processing step (step 11)
+      }
     },
     onError: () => {
       toast({
@@ -222,9 +232,9 @@ export default function CakeBuilder() {
   };
 
   const handleCustomerSubmit = (customerData: any) => {
-    // Store customer data and move to order summary step
+    // Store customer data and move to payment method selection step
     updateConfig(customerData);
-    nextStep(); // Go to order summary step (step 9)
+    nextStep(); // Go to payment method step (step 9)
   };
 
   const handleOrderConfirm = () => {
@@ -241,10 +251,27 @@ export default function CakeBuilder() {
     const orderData = {
       ...cakeConfig,
       totalPrice: pricing?.totalPrice || 0,
+      paymentMethod: paymentMethod,
     };
     
     console.log("Order data being submitted:", orderData);
     createOrderMutation.mutate(orderData);
+  };
+
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful!",
+      description: "Your order has been confirmed.",
+    });
+    
+    setLocation("/order-confirmation");
+    resetBuilder();
+  };
+
+  const handlePaymentCancel = () => {
+    // Go back to payment method selection
+    goToStep(9);
+    setCurrentOrderId(null);
   };
 
   const stepVariants = {
@@ -1100,8 +1127,52 @@ export default function CakeBuilder() {
               </motion.div>
             )}
 
-            {/* Step 9: Order Summary & Final Confirmation */}
+            {/* Step 9: Payment Method Selection */}
             {currentStep === 9 && (
+              <motion.div
+                key="payment-method"
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="mb-6">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    💳 Payment Method
+                  </h2>
+                  <p className="text-neutral-500">Choose how you'd like to pay for your cake</p>
+                </div>
+
+                <PaymentMethodSelector
+                  selectedMethod={paymentMethod}
+                  onMethodChange={setPaymentMethod}
+                  totalAmount={pricing?.totalPrice || 0}
+                />
+
+                <div className="space-y-3 mb-32">
+                  <Button 
+                    className="w-full btn-touch btn-primary h-12"
+                    onClick={nextStep}
+                  >
+                    📋 Continue to Order Summary
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full btn-touch"
+                    onClick={() => goToStep(8)}
+                  >
+                    ← Back to Contact Info
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 10: Order Summary & Final Confirmation */}
+            {currentStep === 10 && (
               <motion.div
                 key="summary"
                 variants={stepVariants}
@@ -1143,6 +1214,13 @@ export default function CakeBuilder() {
                       <span className="text-gray-600">Delivery:</span>
                       <span className="font-medium">
                         {cakeConfig.deliveryMethod === 'pickup' ? 'Store Pickup' : 'Home Delivery'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Payment:</span>
+                      <span className="font-medium capitalize">
+                        {paymentMethod === 'touchngo' ? 'Touch \'n Go eWallet' : 
+                         paymentMethod === 'card' ? 'Credit/Debit Card' : 'Cash'}
                       </span>
                     </div>
                   </CardContent>
@@ -1391,11 +1469,38 @@ export default function CakeBuilder() {
                   <Button 
                     variant="outline" 
                     className="w-full btn-touch"
-                    onClick={() => goToStep(8)}
+                    onClick={() => goToStep(9)}
                   >
-                    ← Back to Edit Details
+                    ← Back to Payment Method
                   </Button>
                 </div>
+              </motion.div>
+            )}
+
+            {/* Step 11: Payment Processing */}
+            {currentStep === 11 && currentOrderId && (
+              <motion.div
+                key="payment-processing"
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="mb-6">
+                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                    💳 Complete Payment
+                  </h2>
+                  <p className="text-neutral-500">Secure payment processing for your order</p>
+                </div>
+
+                <PaymentProcessor
+                  orderId={currentOrderId}
+                  totalAmount={pricing?.totalPrice || 0}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentCancel={handlePaymentCancel}
+                />
               </motion.div>
             )}
           </AnimatePresence>

@@ -1,4 +1,4 @@
-import { users, cakeOrders, cakeTemplates, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate } from "@shared/schema";
+import { users, cakeOrders, cakeTemplates, payments, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type Payment, type InsertPayment } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -16,6 +16,14 @@ export interface IStorage {
   getCakeTemplates(): Promise<CakeTemplate[]>;
   getCakeTemplatesByCategory(category: string): Promise<CakeTemplate[]>;
   createCakeTemplate(template: InsertCakeTemplate): Promise<CakeTemplate>;
+  
+  // Payment methods
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPayment(id: number): Promise<Payment | undefined>;
+  getPaymentByOrderId(orderId: number): Promise<Payment | undefined>;
+  getPaymentByPaymentId(paymentId: string): Promise<Payment | undefined>;
+  updatePaymentStatus(paymentId: string, status: string, webhookData?: any): Promise<Payment | undefined>;
+  updateOrderPaymentStatus(orderId: number, paymentStatus: string, paymentId?: string, paymentUrl?: string): Promise<CakeOrder | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -197,6 +205,31 @@ export class MemStorage implements IStorage {
     this.cakeTemplates.set(id, template);
     return template;
   }
+
+  // Payment methods - In-memory implementation
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
+
+  async getPayment(id: number): Promise<Payment | undefined> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
+
+  async getPaymentByOrderId(orderId: number): Promise<Payment | undefined> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
+
+  async getPaymentByPaymentId(paymentId: string): Promise<Payment | undefined> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
+
+  async updatePaymentStatus(paymentId: string, status: string, webhookData?: any): Promise<Payment | undefined> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
+
+  async updateOrderPaymentStatus(orderId: number, paymentStatus: string, paymentId?: string, paymentUrl?: string): Promise<CakeOrder | undefined> {
+    throw new Error("Payment methods not implemented in MemStorage");
+  }
 }
 
 // Use database storage for persistence
@@ -315,6 +348,80 @@ export class DatabaseStorage implements IStorage {
       .values(insertTemplate)
       .returning();
     return template;
+  }
+
+  // Payment methods
+  async createPayment(insertPayment: InsertPayment): Promise<Payment> {
+    const paymentData = {
+      ...insertPayment,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    const [payment] = await db
+      .insert(payments)
+      .values(paymentData)
+      .returning();
+    return payment;
+  }
+
+  async getPayment(id: number): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment || undefined;
+  }
+
+  async getPaymentByOrderId(orderId: number): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.orderId, orderId));
+    return payment || undefined;
+  }
+
+  async getPaymentByPaymentId(paymentId: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.paymentId, paymentId));
+    return payment || undefined;
+  }
+
+  async updatePaymentStatus(paymentId: string, status: string, webhookData?: any): Promise<Payment | undefined> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    if (webhookData) {
+      updateData.webhookData = webhookData;
+    }
+    
+    const [payment] = await db
+      .update(payments)
+      .set(updateData)
+      .where(eq(payments.paymentId, paymentId))
+      .returning();
+    return payment || undefined;
+  }
+
+  async updateOrderPaymentStatus(orderId: number, paymentStatus: string, paymentId?: string, paymentUrl?: string): Promise<CakeOrder | undefined> {
+    const updateData: any = {
+      paymentStatus,
+    };
+    
+    if (paymentId) {
+      updateData.paymentId = paymentId;
+    }
+    
+    if (paymentUrl) {
+      updateData.paymentUrl = paymentUrl;
+    }
+    
+    if (paymentStatus === 'completed') {
+      updateData.paymentCompletedAt = new Date().toISOString();
+      updateData.status = 'confirmed'; // Update order status when payment is completed
+    }
+    
+    const [order] = await db
+      .update(cakeOrders)
+      .set(updateData)
+      .where(eq(cakeOrders.id, orderId))
+      .returning();
+    return order || undefined;
   }
 }
 

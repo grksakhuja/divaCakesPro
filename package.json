@@ -14,6 +14,9 @@
     "test:basic": "node test-pricing.js",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx server/seed.ts",
+    "db:migrate-payments": "tsx server/migrate-payments.ts",
+    "demo": "bash setup-demo.sh",
+    "demo:start": "DEMO_MODE=true npm run dev",
     "postbuild": "mkdir -p dist/server && cp server/pricing-structure.json dist/server/pricing-structure.json"
   },
   "dependencies": {

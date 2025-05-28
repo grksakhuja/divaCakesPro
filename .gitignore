@@ -5,3 +5,9 @@ node_modules
 .env
 deploy-env.sh
 dist
+.DS_Store
+.vscode
+.idea
+.mcp
+.mcp-server
+.mcp-server-kubernetes

@@ -30,6 +30,13 @@ export const cakeOrders = pgTable("cake_orders", {
   totalPrice: integer("total_price").notNull(), // in cents
   status: text("status").notNull().default("pending"),
   orderDate: text("order_date").notNull(),
+  paymentMethod: text("payment_method").default("cash"),
+  paymentStatus: text("payment_status").default("pending"),
+  paymentId: text("payment_id"),
+  paymentUrl: text("payment_url"),
+  paymentReference: text("payment_reference"),
+  paymentAmount: integer("payment_amount"),
+  paymentCompletedAt: text("payment_completed_at"),
 });
 
 export const cakeTemplates = pgTable("cake_templates", {
@@ -43,6 +50,21 @@ export const cakeTemplates = pgTable("cake_templates", {
   icingType: text("icing_type").notNull(),
   decorations: json("decorations").$type<string[]>().notNull(),
   basePrice: integer("base_price").notNull(), // in cents
+});
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => cakeOrders.id),
+  paymentMethod: text("payment_method").notNull(),
+  paymentProvider: text("payment_provider").notNull(),
+  paymentId: text("payment_id").notNull(),
+  amount: integer("amount").notNull(),
+  currency: text("currency").default("MYR"),
+  status: text("status").default("pending"),
+  providerResponse: json("provider_response"),
+  webhookData: json("webhook_data"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });
 
 export const insertCakeOrderSchema = createInsertSchema(cakeOrders).omit({
@@ -60,9 +82,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertCakeOrder = z.infer<typeof insertCakeOrderSchema>;
 export type CakeOrder = typeof cakeOrders.$inferSelect;
 export type InsertCakeTemplate = z.infer<typeof insertCakeTemplateSchema>;
 export type CakeTemplate = typeof cakeTemplates.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
