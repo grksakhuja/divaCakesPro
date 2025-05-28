@@ -2,3 +2,4 @@
 /Users/rohitsakhuja/.config/
 *.socket
 node_modules
+.env
