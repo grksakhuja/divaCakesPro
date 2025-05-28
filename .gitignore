@@ -3,3 +3,5 @@
 *.socket
 node_modules
 .env
+deploy-env.sh
+dist

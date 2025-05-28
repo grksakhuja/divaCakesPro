@@ -26,6 +26,7 @@ export const cakeOrders = pgTable("cake_orders", {
   sixInchCakes: integer("six_inch_cakes").notNull().default(0),
   eightInchCakes: integer("eight_inch_cakes").notNull().default(0),
   deliveryMethod: text("delivery_method").notNull().default("pickup"),
+  specialInstructions: text("special_instructions"),
   totalPrice: integer("total_price").notNull(), // in cents
   status: text("status").notNull().default("pending"),
   orderDate: text("order_date").notNull(),

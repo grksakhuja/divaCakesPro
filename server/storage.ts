@@ -117,15 +117,48 @@ export class MemStorage implements IStorage {
   }
 
   async createCakeOrder(insertOrder: InsertCakeOrder): Promise<CakeOrder> {
-    const id = this.currentOrderId++;
-    const order: CakeOrder = {
-      ...insertOrder,
-      id,
-      orderDate: new Date().toISOString(),
-      status: "pending",
-    };
-    this.cakeOrders.set(id, order);
-    return order;
+    const {
+      message = null,
+      specialInstructions = null,
+      ...rest
+    } = insertOrder;
+    console.log("Database insert order data:", insertOrder);
+    try {
+      const orderData: Omit<CakeOrder, 'id'> = {
+        ...rest,
+        message,
+        specialInstructions,
+        customerPhone: insertOrder.customerPhone ?? null,
+        layers: insertOrder.layers || 1,
+        shape: insertOrder.shape || "round",
+        flavors: insertOrder.flavors || [],
+        icingColor: insertOrder.icingColor || "#87CEEB",
+        icingType: insertOrder.icingType || "butter",
+        decorations: insertOrder.decorations || [],
+        messageFont: insertOrder.messageFont || "classic",
+        dietaryRestrictions: insertOrder.dietaryRestrictions || [],
+        servings: insertOrder.servings || 12,
+        sixInchCakes: insertOrder.sixInchCakes || 0,
+        eightInchCakes: insertOrder.eightInchCakes || 0,
+        deliveryMethod: insertOrder.deliveryMethod || "pickup",
+        totalPrice: insertOrder.totalPrice,
+        orderDate: new Date().toISOString(),
+        status: "pending",
+      };
+      
+      console.log("Processed order data:", orderData);
+      
+      const [order] = await db
+        .insert(cakeOrders)
+        .values(orderData)
+        .returning();
+      
+      console.log("Database created order:", order);
+      return order;
+    } catch (error) {
+      console.error("Database insertion error:", error);
+      throw error;
+    }
   }
 
   async updateCakeOrderStatus(id: number, status: string): Promise<CakeOrder | undefined> {
@@ -199,19 +232,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCakeOrder(insertOrder: InsertCakeOrder): Promise<CakeOrder> {
+    const {
+      message = null,
+      specialInstructions = null,
+      ...rest
+    } = insertOrder;
     console.log("Database insert order data:", insertOrder);
     try {
-      const orderData = {
-        customerName: insertOrder.customerName,
-        customerEmail: insertOrder.customerEmail,
-        customerPhone: insertOrder.customerPhone || null,
+      const orderData: Omit<CakeOrder, 'id'> = {
+        ...rest,
+        message,
+        specialInstructions,
+        customerPhone: insertOrder.customerPhone ?? null,
         layers: insertOrder.layers || 1,
         shape: insertOrder.shape || "round",
         flavors: insertOrder.flavors || [],
         icingColor: insertOrder.icingColor || "#87CEEB",
         icingType: insertOrder.icingType || "butter",
         decorations: insertOrder.decorations || [],
-        message: insertOrder.message || null,
         messageFont: insertOrder.messageFont || "classic",
         dietaryRestrictions: insertOrder.dietaryRestrictions || [],
         servings: insertOrder.servings || 12,

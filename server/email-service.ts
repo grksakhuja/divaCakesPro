@@ -48,6 +48,7 @@ const createAdminEmailTemplate = (order: CakeOrder) => {
           ${order.decorations.length > 0 ? `<p><strong>Decorations:</strong> ${order.decorations.join(', ')}</p>` : ''}
           ${order.message ? `<p><strong>Message:</strong> "${order.message}"</p>` : ''}
           ${order.dietaryRestrictions.length > 0 ? `<p><strong>Dietary Restrictions:</strong> ${order.dietaryRestrictions.join(', ')}</p>` : ''}
+          ${order.specialInstructions ? `<p><strong>Special Instructions:</strong> ${order.specialInstructions}</p>` : ''}
         </div>
 
         <div style="text-align: center; margin-top: 30px; color: #666;">
@@ -89,6 +90,7 @@ const createCustomerEmailTemplate = (order: CakeOrder) => {
           ${order.decorations.length > 0 ? `<p><strong>Decorations:</strong> ${order.decorations.join(', ')}</p>` : ''}
           ${order.message ? `<p><strong>Message:</strong> "${order.message}"</p>` : ''}
           ${order.dietaryRestrictions.length > 0 ? `<p><strong>Dietary Restrictions:</strong> ${order.dietaryRestrictions.join(', ')}</p>` : ''}
+          ${order.specialInstructions ? `<p><strong>Special Instructions:</strong> ${order.specialInstructions}</p>` : ''}
         </div>
 
         <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
