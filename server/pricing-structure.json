@@ -10,7 +10,17 @@
     "orange": 0,
     "lemon": 0,
     "orange-poppyseed": 500,
-    "lemon-poppyseed": 500
+    "lemon-poppyseed": 500,
+    "chocolate-fudge": 800,
+    "red-velvet": 1000,
+    "carrot": 1000,
+    "vanilla": 0,
+    "marble": 500,
+    "coffee": 800,
+    "strawberry": 800,
+    "coconut": 800,
+    "pandan": 800,
+    "durian": 1500
   },
   "icingTypes": {
     "butter": 0,
@@ -39,5 +49,18 @@
   },
   "templatePrices": {
     "fathers-day": 1000
+  },
+  "specialtyItems": {
+    "cheesecake-whole": 8500,
+    "pavlova": 2100,
+    "matcha-pavlova": 2100,
+    "coconut-candy-og": 4200,
+    "coconut-candy-pandan": 4200,
+    "coconut-candy-raspberry": 4200
+  },
+  "slicedCakes": {
+    "orange-poppyseed": 700,
+    "butter-cake": 700,
+    "chocolate-fudge": 700
   }
 }

@@ -10,6 +10,9 @@ import OrderConfirmation from "@/pages/order-confirmation";
 import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
 import NotFound from "@/pages/not-found";
+import Gallery from "@/pages/gallery";
+import About from "@/pages/about";
+import Cakes from "@/pages/cakes";
 
 function Router() {
   return (
@@ -27,6 +30,21 @@ function Router() {
       <Route path="/order-confirmation">
         <Layout>
           <OrderConfirmation />
+        </Layout>
+      </Route>
+      <Route path="/gallery">
+        <Layout>
+          <Gallery />
+        </Layout>
+      </Route>
+      <Route path="/about">
+        <Layout>
+          <About />
+        </Layout>
+      </Route>
+      <Route path="/cakes">
+        <Layout>
+          <Cakes />
         </Layout>
       </Route>
       <Route path="/admin/login" component={AdminLogin} />
