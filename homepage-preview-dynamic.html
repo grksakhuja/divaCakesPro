@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sugar Art Diva - Homepage Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hero-bg {
+            background: linear-gradient(135deg, #FFB6C1 0%, #FFA07A 100%);
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 bg-white shadow-sm">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-pink-400 rounded-full flex items-center justify-center">
+                        <i class="fas fa-birthday-cake text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">Sugar Art Diva</span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-pink-500 font-medium">Home</a>
+                    <a href="/order" class="text-gray-600 hover:text-pink-500 transition">Order Now</a>
+                    <a href="/gallery" class="text-gray-600 hover:text-pink-500 transition">Gallery</a>
+                    <a href="/about" class="text-gray-600 hover:text-pink-500 transition">About</a>
+                    <a href="/contact" class="text-gray-600 hover:text-pink-500 transition">Contact</a>
+                    <button class="bg-pink-500 text-white px-6 py-2 rounded-full hover:bg-pink-600 transition">
+                        <i class="fas fa-shopping-cart mr-2"></i>Order
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden text-gray-600">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-bg text-white py-20 md:py-32">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h1 class="text-4xl md:text-6xl font-bold mb-4">
+                        Custom Cakes<br/>Made with Love
+                    </h1>
+                    <p class="text-xl mb-8 opacity-90">
+                        From birthdays to weddings, we craft the perfect cake for your special moments
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="bg-white text-pink-500 px-8 py-4 rounded-full font-semibold hover:shadow-lg transition">
+                            Order Your Cake
+                        </button>
+                        <button class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-pink-500 transition">
+                            View Gallery
+                        </button>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <img src="https://images.unsplash.com/photo-1557925923-cd4648e211a0?w=600" alt="Beautiful cake" class="rounded-lg shadow-2xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Why Choose Sugar Art Diva?</h2>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-palette text-3xl text-pink-500"></i>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Custom Designs</h3>
+                    <p class="text-gray-600">Every cake is uniquely designed to match your vision</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-leaf text-3xl text-orange-500"></i>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Fresh Ingredients</h3>
+                    <p class="text-gray-600">Premium quality ingredients for the best taste</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-truck text-3xl text-green-500"></i>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Fast Delivery</h3>
+                    <p class="text-gray-600">On-time delivery for your special occasions</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-heart text-3xl text-purple-500"></i>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Made with Love</h3>
+                    <p class="text-gray-600">Every cake is crafted with care and passion</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Cakes -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Featured Cakes</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-hover bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=400" alt="Birthday cake" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-xl mb-2">Birthday Celebration</h3>
+                        <p class="text-gray-600 mb-4">Perfect for making birthdays extra special</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-pink-500" id="birthday-price">Loading...</span>
+                            <button class="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition">
+                                Order Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-hover bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=400" alt="Wedding cake" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-xl mb-2">Wedding Elegance</h3>
+                        <p class="text-gray-600 mb-4">Stunning multi-tier cakes for your big day</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-pink-500" id="wedding-price">Loading...</span>
+                            <button class="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition">
+                                Order Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-hover bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400" alt="Custom cake" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="font-semibold text-xl mb-2">Custom Creation</h3>
+                        <p class="text-gray-600 mb-4">Your imagination, our expertise</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-pink-500">Get Quote</span>
+                            <button class="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition">
+                                Design Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Script to fetch pricing -->
+    <script>
+        // Format price from cents to MYR
+        function formatPrice(cents) {
+            return `RM ${(cents / 100).toFixed(2)}`;
+        }
+
+        // Fetch pricing information
+        async function loadPricing() {
+            try {
+                // Fetch minimum price for 6" cake (birthday)
+                const birthdayResponse = await fetch('/api/calculate-price', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        layers: 1,
+                        shape: 'round',
+                        flavors: ['butter'],
+                        icingType: 'butter',
+                        decorations: [],
+                        dietaryRestrictions: [],
+                        sixInchCakes: 1,
+                        eightInchCakes: 0
+                    })
+                });
+                
+                if (birthdayResponse.ok) {
+                    const birthdayData = await birthdayResponse.json();
+                    document.getElementById('birthday-price').textContent = `From ${formatPrice(birthdayData.totalPrice)}`;
+                }
+
+                // Fetch price for 3-tier wedding cake
+                const weddingResponse = await fetch('/api/calculate-price', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        layers: 1,
+                        shape: 'round',
+                        flavors: ['butter'],
+                        icingType: 'fondant',
+                        decorations: ['flowers'],
+                        dietaryRestrictions: [],
+                        sixInchCakes: 1,
+                        eightInchCakes: 2
+                    })
+                });
+                
+                if (weddingResponse.ok) {
+                    const weddingData = await weddingResponse.json();
+                    document.getElementById('wedding-price').textContent = `From ${formatPrice(weddingData.totalPrice)}`;
+                }
+            } catch (error) {
+                console.error('Failed to load pricing:', error);
+                document.getElementById('birthday-price').textContent = 'From RM 90.00';
+                document.getElementById('wedding-price').textContent = 'From RM 410.00';
+            }
+        }
+
+        // Load pricing when page loads
+        loadPricing();
+    </script>
+
+    <!-- How It Works -->
+    <section class="py-16 bg-pink-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">How It Works</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span class="text-4xl font-bold text-pink-500">1</span>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Choose Your Base</h3>
+                    <p class="text-gray-600">Select size, flavor, and shape</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span class="text-4xl font-bold text-pink-500">2</span>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Customize Design</h3>
+                    <p class="text-gray-600">Add decorations, colors, and personal touches</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span class="text-4xl font-bold text-pink-500">3</span>
+                    </div>
+                    <h3 class="font-semibold text-xl mb-2">Enjoy Your Cake</h3>
+                    <p class="text-gray-600">We deliver fresh to your celebration</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">What Our Customers Say</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-600 mb-4">"The cake was absolutely perfect! Everyone at the party loved it. Will definitely order again!"</p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold">Sarah Johnson</p>
+                            <p class="text-sm text-gray-500">Birthday Party</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-600 mb-4">"Amazing attention to detail! They created exactly what I envisioned for my wedding."</p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold">Emily Chen</p>
+                            <p class="text-sm text-gray-500">Wedding</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex mb-4">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-600 mb-4">"Best cake I've ever had! Fresh, delicious, and beautifully decorated. Highly recommend!"</p>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                        <div>
+                            <p class="font-semibold">Mike Davis</p>
+                            <p class="text-sm text-gray-500">Anniversary</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 bg-gradient-to-r from-pink-500 to-orange-400 text-white">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Ready to Order Your Dream Cake?</h2>
+            <p class="text-xl mb-8">Use our easy cake builder to create your perfect custom cake</p>
+            <button class="bg-white text-pink-500 px-8 py-4 rounded-full font-semibold hover:shadow-lg transition text-lg">
+                Start Building Your Cake
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-pink-400 rounded-full flex items-center justify-center">
+                            <i class="fas fa-birthday-cake text-white text-sm"></i>
+                        </div>
+                        <span class="text-lg font-bold">Sugar Art Diva</span>
+                    </div>
+                    <p class="text-gray-400">Creating sweet memories, one cake at a time.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="/order" class="hover:text-white transition">Order Now</a></li>
+                        <li><a href="/gallery" class="hover:text-white transition">Gallery</a></li>
+                        <li><a href="/about" class="hover:text-white transition">About Us</a></li>
+                        <li><a href="/contact" class="hover:text-white transition">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><i class="fas fa-phone mr-2"></i>(555) 123-4567</li>
+                        <li><i class="fas fa-envelope mr-2"></i>hello@sugarartdiva.com</li>
+                        <li><i class="fas fa-map-marker-alt mr-2"></i>123 Bakery St, Sweet City</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Follow Us</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-500 transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Sugar Art Diva. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Menu (Hidden by default) -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" id="mobileMenu">
+        <div class="bg-white w-80 h-full p-6">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-pink-400 rounded-full flex items-center justify-center">
+                        <i class="fas fa-birthday-cake text-white text-sm"></i>
+                    </div>
+                    <span class="text-lg font-bold">Sugar Art Diva</span>
+                </div>
+                <button onclick="document.getElementById('mobileMenu').classList.add('hidden')">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <nav class="space-y-4">
+                <a href="/" class="block py-2 text-pink-500 font-medium">Home</a>
+                <a href="/order" class="block py-2 text-gray-600">Order Now</a>
+                <a href="/gallery" class="block py-2 text-gray-600">Gallery</a>
+                <a href="/about" class="block py-2 text-gray-600">About</a>
+                <a href="/contact" class="block py-2 text-gray-600">Contact</a>
+                <button class="w-full bg-pink-500 text-white px-6 py-3 rounded-full hover:bg-pink-600 transition mt-4">
+                    <i class="fas fa-shopping-cart mr-2"></i>Order Now
+                </button>
+            </nav>
+        </div>
+    </div>
+</body>
+</html>

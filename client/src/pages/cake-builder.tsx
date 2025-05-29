@@ -258,7 +258,7 @@ export default function CakeBuilder() {
       <ProgressIndicator />
       <RunningCost pricingStructure={pricingStructure} />
       
-      <div className="pt-20 pb-40">
+      <div className="pt-32 pb-40">
         <div className="max-w-lg mx-auto px-4">
           <AnimatePresence mode="wait">
             {/* Step 1: Welcome */}
@@ -275,14 +275,14 @@ export default function CakeBuilder() {
                 <div className="text-center mb-16">
                   <div className="mb-12 mt-8">
                     <div className="text-6xl mb-1 animate-float">🎂🍰🧁</div>
-                    <h1 className="text-5xl font-extrabold text-pink-600 mb-8 tracking-wide">
+                    <h1 className="text-4xl md:text-5xl font-bold text-pink-500 mb-8">
                       Sugar Art Diva
                     </h1>
                   </div>
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-3">
+                  <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-3">
                     Build Your Dream Cake! 🎂
                   </h2>
-                  <p className="text-neutral-500 text-lg">
+                  <p className="text-gray-600 text-lg">
                     Where Every Cake is a Masterpiece - Designed Just for You!
                   </p>
                 </div>
@@ -290,7 +290,7 @@ export default function CakeBuilder() {
                 <div className="space-y-6">
                   {/* Base Size Selection - IMPROVED with component */}
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold text-neutral-800">🎂 Choose Your Base Size</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">🎂 Choose Your Base Size</h3>
                     <ImprovedButtonGrid
                       items={[
                         {
@@ -343,7 +343,7 @@ export default function CakeBuilder() {
                     <>
                       <Separator />
                       
-                      <div className="text-center text-sm text-neutral-500">
+                      <div className="text-center text-sm text-gray-600">
                         Or choose from our templates
                       </div>
                       
@@ -393,7 +393,7 @@ export default function CakeBuilder() {
                   {/* FATHER'S DAY SPECIAL - ALWAYS AVAILABLE */}
                   <Separator />
                   
-                  <div className="text-center text-sm text-neutral-500">
+                  <div className="text-center text-sm text-gray-600">
                     Special Occasion
                   </div>
                   
@@ -424,7 +424,7 @@ export default function CakeBuilder() {
                     <>
                       <Separator />
                       
-                      <div className="text-center text-sm text-neutral-500">
+                      <div className="text-center text-sm text-gray-600">
                         Or choose from our templates
                       </div>
                       
@@ -495,7 +495,7 @@ export default function CakeBuilder() {
                                     <p className="text-sm font-medium text-purple-800">
                                       ₱{(template.basePrice / 100).toFixed(2)}
                                     </p>
-                                    <p className="text-xs text-neutral-500">base price</p>
+                                    <p className="text-xs text-gray-600">base price</p>
                                   </div>
                                 </div>
                               </div>
@@ -525,10 +525,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6 text-center">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     🧁 Build Your Layers
                   </h2>
-                  <p className="text-neutral-500">Add layers and choose your cake shape</p>
+                  <p className="text-gray-600">Add layers and choose your cake shape</p>
                 </div>
 
                 <CakePreview />
@@ -652,10 +652,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6 text-center">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     🍰 Choose Flavors
                   </h2>
-                  <p className="text-neutral-500">Select flavors for each layer</p>
+                  <p className="text-gray-600">Select flavors for each layer</p>
                 </div>
 
                 {Array.from({ length: cakeConfig.layers }, (_, layerIndex) => (
@@ -692,10 +692,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6 text-center">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     🎨 Icing & Decorations
                   </h2>
-                  <p className="text-neutral-500">Choose colors, icing type, and decorations</p>
+                  <p className="text-gray-600">Choose colors, icing type, and decorations</p>
                 </div>
 
                 <CakePreview />
@@ -771,10 +771,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6 text-center">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     💌 Add Your Message
                   </h2>
-                  <p className="text-neutral-500">Personalize your cake with text and photos</p>
+                  <p className="text-gray-600">Personalize your cake with text and photos</p>
                 </div>
 
                 <CakePreview />
@@ -792,7 +792,7 @@ export default function CakeBuilder() {
                       maxLength={25}
                       className="mt-2 text-lg"
                     />
-                    <div className="text-right text-sm text-neutral-500 mt-2">
+                    <div className="text-right text-sm text-gray-600 mt-2">
                       {(cakeConfig.message || "").length}/25 characters
                     </div>
                   </CardContent>
@@ -817,10 +817,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     🌱 Dietary Preferences
                   </h2>
-                  <p className="text-neutral-500">Select any dietary requirements or allergen restrictions</p>
+                  <p className="text-gray-600">Select any dietary requirements or allergen restrictions</p>
                 </div>
 
                 <Card>
@@ -907,10 +907,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     📏 Size & Servings
                   </h2>
-                  <p className="text-neutral-500">Choose the perfect size for your occasion</p>
+                  <p className="text-gray-600">Choose the perfect size for your occasion</p>
                 </div>
 
                 <Card>
@@ -1087,10 +1087,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     🎉 Almost Done!
                   </h2>
-                  <p className="text-neutral-500">Enter your contact details to complete your order</p>
+                  <p className="text-gray-600">Enter your contact details to complete your order</p>
                 </div>
 
                 <CustomerForm 
@@ -1112,10 +1112,10 @@ export default function CakeBuilder() {
                 className="space-y-6"
               >
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-neutral-800 mb-4">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     📋 Order Summary
                   </h2>
-                  <p className="text-neutral-500">Review your custom cake before placing your order</p>
+                  <p className="text-gray-600">Review your custom cake before placing your order</p>
                 </div>
 
                 {/* Customer Details */}
