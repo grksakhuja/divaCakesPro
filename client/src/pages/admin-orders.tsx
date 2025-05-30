@@ -26,6 +26,31 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+interface OrderItem {
+  id: number;
+  orderId: number;
+  itemType: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  layers?: number;
+  shape?: string;
+  flavors?: string[];
+  icingColor?: string;
+  icingType?: string;
+  decorations?: string[];
+  message?: string;
+  messageFont?: string;
+  dietaryRestrictions?: string[];
+  servings?: number;
+  sixInchCakes?: number;
+  eightInchCakes?: number;
+  specialtyId?: string;
+  specialtyDescription?: string;
+  createdAt: string;
+}
+
 interface Order {
   id: number;
   customerName: string;
@@ -44,6 +69,9 @@ interface Order {
   deliveryMethod: string;
   orderDate: string;
   status: string;
+  hasLineItems?: boolean;
+  orderItems?: OrderItem[];
+  specialInstructions?: string;
 }
 
 export default function AdminOrders() {
@@ -364,25 +392,107 @@ export default function AdminOrders() {
                     </div>
                   </div>
 
-                  {/* Cake Details */}
-                  <div className="bg-pink-50 p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2">Cake Details</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                      <div><strong>Size:</strong> {order.sixInchCakes}×6" + {order.eightInchCakes}×8" cake{(order.sixInchCakes + order.eightInchCakes) > 1 ? 's' : ''}</div>
-                      <div><strong>Layers:</strong> {order.layers}</div>
-                      <div><strong>Shape:</strong> {order.shape}</div>
-                      <div><strong>Flavors:</strong> {order.flavors.join(', ')}</div>
-                      <div><strong>Icing:</strong> {order.icingType}</div>
-                      {order.decorations.length > 0 && (
-                        <div><strong>Decorations:</strong> {order.decorations.join(', ')}</div>
-                      )}
-                      {order.message && (
-                        <div className="md:col-span-2"><strong>Message:</strong> "{order.message}"</div>
-                      )}
-                      {order.dietaryRestrictions.length > 0 && (
-                        <div><strong>Dietary:</strong> {order.dietaryRestrictions.join(', ')}</div>
-                      )}
+                  {/* Order Items */}
+                  {order.hasLineItems ? (
+                    order.orderItems && order.orderItems.length > 0 ? (
+                    <div className="bg-pink-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">Order Items ({order.orderItems.length})</h3>
+                      <div className="space-y-3">
+                        {order.orderItems.map((item, index) => (
+                          <div key={item.id} className="bg-white p-3 rounded border">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-medium">{item.itemName}</h4>
+                                <p className="text-sm text-gray-600 capitalize">{item.itemType}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium">Qty: {item.quantity}</div>
+                                <div className="text-sm text-gray-600">{formatPrice(item.unitPrice)} each</div>
+                              </div>
+                            </div>
+                            
+                            {item.itemType === 'custom' && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mt-2 pt-2 border-t">
+                                <div><strong>Size:</strong> {item.sixInchCakes}×6" + {item.eightInchCakes}×8"</div>
+                                <div><strong>Layers:</strong> {item.layers}</div>
+                                <div><strong>Shape:</strong> {item.shape}</div>
+                                <div><strong>Flavors:</strong> {item.flavors?.join(', ')}</div>
+                                <div><strong>Icing:</strong> {item.icingType}</div>
+                                {item.decorations && item.decorations.length > 0 && (
+                                  <div><strong>Decorations:</strong> {item.decorations.join(', ')}</div>
+                                )}
+                                {item.message && (
+                                  <div className="md:col-span-2"><strong>Message:</strong> "{item.message}"</div>
+                                )}
+                                {item.dietaryRestrictions && item.dietaryRestrictions.length > 0 && (
+                                  <div><strong>Dietary:</strong> {item.dietaryRestrictions.join(', ')}</div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {item.itemType !== 'custom' && item.specialtyDescription && (
+                              <p className="text-sm text-gray-600 mt-2">{item.specialtyDescription}</p>
+                            )}
+                            
+                            <div className="text-right mt-2 pt-2 border-t">
+                              <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                    ) : (
+                      /* Multi-item order but items failed to load */
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 text-red-800">⚠️ Multi-Item Order (Items Not Loaded)</h3>
+                        <p className="text-sm text-red-600 mb-2">
+                          This order contains multiple items but the details failed to load from the database.
+                        </p>
+                        <div className="text-sm">
+                          <div><strong>Order Type:</strong> Multi-item cart order</div>
+                          <div><strong>Total Items:</strong> {order.servings} items</div>
+                          <div><strong>Debug:</strong> hasLineItems={String(order.hasLineItems)}, orderItems={order.orderItems ? `array(${order.orderItems.length})` : 'null'}</div>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    /* Single Custom Cake Details */
+                    <div className="bg-pink-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">Custom Cake Details</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div><strong>Size:</strong> {order.sixInchCakes}×6" + {order.eightInchCakes}×8" cake{(order.sixInchCakes + order.eightInchCakes) > 1 ? 's' : ''}</div>
+                        <div><strong>Layers:</strong> {order.layers}</div>
+                        <div><strong>Shape:</strong> {order.shape}</div>
+                        <div><strong>Flavors:</strong> {order.flavors.join(', ')}</div>
+                        <div><strong>Icing:</strong> {order.icingType}</div>
+                        {order.decorations.length > 0 && (
+                          <div><strong>Decorations:</strong> {order.decorations.join(', ')}</div>
+                        )}
+                        {order.message && (
+                          <div className="md:col-span-2"><strong>Message:</strong> "{order.message}"</div>
+                        )}
+                        {order.dietaryRestrictions.length > 0 && (
+                          <div><strong>Dietary:</strong> {order.dietaryRestrictions.join(', ')}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Special Instructions */}
+                  {order.specialInstructions && (
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">Special Instructions</h3>
+                      <p className="text-sm">{order.specialInstructions}</p>
+                    </div>
+                  )}
+
+                  {/* Delivery Method */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Delivery Method
+                    </h3>
+                    <p className="text-sm capitalize">{order.deliveryMethod}</p>
                   </div>
 
                   {/* Price */}

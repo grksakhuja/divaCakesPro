@@ -6,7 +6,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   getCakeOrder(id: number): Promise<CakeOrder | undefined>;
-  getAllCakeOrders(): Promise<CakeOrder[]>;
+  getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]>;
   createCakeOrder(order: InsertCakeOrder): Promise<CakeOrder>;
   updateCakeOrderStatus(id: number, status: string): Promise<CakeOrder | undefined>;
   
@@ -115,7 +115,7 @@ export class MemStorage implements IStorage {
     return this.cakeOrders.get(id);
   }
 
-  async getAllCakeOrders(): Promise<CakeOrder[]> {
+  async getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]> {
     return Array.from(this.cakeOrders.values());
   }
 
@@ -214,7 +214,7 @@ export class MemStorage implements IStorage {
 
 // Use database storage for persistence
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
@@ -240,8 +240,37 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async getAllCakeOrders(): Promise<CakeOrder[]> {
-    return await db.select().from(cakeOrders).orderBy(cakeOrders.id);
+  async getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]> {
+    console.log("📋 DatabaseStorage: getAllCakeOrders called");
+    try {
+      const orders = await db.select().from(cakeOrders).orderBy(desc(cakeOrders.id));
+      console.log(`📋 Found ${orders.length} orders`);
+      
+      // For orders with line items, fetch the associated order items
+      const ordersWithItems = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            if (order.hasLineItems) {
+              console.log(`📦 Fetching line items for order #${order.id}`);
+              const items = await this.getOrderItemsByOrderId(order.id);
+              console.log(`📦 Found ${items.length} items for order #${order.id}:`, items.map(i => i.itemName));
+              return { ...order, orderItems: items };
+            }
+            console.log(`📦 Order #${order.id} is single-item (no line items)`);
+            return order;
+          } catch (error) {
+            console.error(`❌ Error fetching items for order ${order.id}:`, error);
+            return order; // Return order without items if there's an error
+          }
+        })
+      );
+      
+      console.log(`📋 Returning ${ordersWithItems.length} orders with line items processed`);
+      return ordersWithItems;
+    } catch (error) {
+      console.error('❌ Error in getAllCakeOrders:', error);
+      throw error;
+    }
   }
 
   async createCakeOrder(insertOrder: InsertCakeOrder): Promise<CakeOrder> {
