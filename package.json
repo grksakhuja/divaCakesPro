@@ -12,6 +12,7 @@
     "test:all": "node run-all-tests.js",
     "test:smart": "node smart-pricing-test.js",
     "test:basic": "node test-pricing.js",
+    "test:dynamic": "node test-dynamic-specialty-items.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",

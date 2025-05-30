@@ -24,6 +24,7 @@ const workingTests = [
   'test-pricing.js',                    // Basic pricing tests (working)
   'smart-pricing-test.js',              // Our revolutionary self-maintaining tests
   'fixed-comprehensive-pricing-test.js', // Fixed version with correct expectations
+  'test-dynamic-specialty-items.js',    // Dynamic specialty items API and cart integration
 ];
 
 const brokenTests = [

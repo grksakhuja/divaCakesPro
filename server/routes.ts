@@ -527,6 +527,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve dynamic cakes structured by subsections
+  app.get("/api/cakes", (req, res) => {
+    try {
+      const pricingStructure = getPricingStructure();
+      const cakes = pricingStructure.cakes || {};
+      
+      // Transform the nested structure for easier frontend consumption
+      const transformedItems = {};
+      
+      Object.keys(cakes).forEach(subsectionKey => {
+        const subsection = cakes[subsectionKey];
+        
+        // Convert subsection items to array format with metadata
+        const items = Object.keys(subsection).map(itemKey => ({
+          id: itemKey,
+          ...subsection[itemKey]
+        }));
+        
+        transformedItems[subsectionKey] = {
+          sectionName: subsectionKey.split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' '),
+          items: items
+        };
+      });
+      
+      res.json(transformedItems);
+    } catch (err) {
+      console.error("Error serving cakes:", err);
+      res.status(500).json({ error: "Could not load cakes" });
+    }
+  });
+
   // Delete a specific order (admin only)
   app.delete("/api/orders/:id", async (req, res) => {
     try {
