@@ -34,7 +34,6 @@ import ProgressIndicator from "@/components/progress-indicator";
 import CakePreview from "@/components/cake-preview";
 import ColorPalette from "@/components/ui/color-palette";
 import RunningCost from "@/components/running-cost";
-import CustomerForm from "@/components/customer-form";
 import { 
   FLAVOR_OPTIONS, 
   DECORATION_OPTIONS, 
@@ -127,33 +126,6 @@ export default function CakeBuilder() {
     },
   });
 
-  // Create order mutation
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
-      const response = await apiRequest("/api/orders", "POST", orderData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Store order details for confirmation page
-      localStorage.setItem("latestOrder", JSON.stringify(data));
-      
-      toast({
-        title: "Order Placed Successfully!",
-        description: `Your order #${data.id} has been received.`,
-      });
-      
-      // Redirect to confirmation page
-      setLocation("/order-confirmation");
-      resetBuilder();
-    },
-    onError: () => {
-      toast({
-        title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
   useEffect(() => {
     if (currentStep >= 2) {
@@ -161,8 +133,8 @@ export default function CakeBuilder() {
     }
   }, [cakeConfig, currentStep, recalculatePrice]);
 
-  const handleTemplateSelect = (template: any) => {
-    updateConfig({
+  const handleTemplateSelect = async (template: any) => {
+    const templateConfig = {
       template: template.id,
       layers: template.layers,
       shape: template.shape,
@@ -173,8 +145,36 @@ export default function CakeBuilder() {
       servings: template.layers === 1 ? 6 : template.layers === 2 ? 8 : 10,
       sixInchCakes: template.sixInchCakes || 1,
       eightInchCakes: template.eightInchCakes || 0,
-    });
-    goToStep(8); // Jump to customer form step (step 8)
+    };
+    
+    // Calculate price for template
+    try {
+      const response = await apiRequest("/api/calculate-price", "POST", templateConfig);
+      const pricing = await response.json();
+      
+      // Create cart item and add directly to cart
+      const cartItem = createCustomCakeCartItem(
+        templateConfig,
+        pricing.totalPrice,
+        1
+      );
+      
+      addToCart(cartItem);
+      
+      toast({
+        title: `${template.name} Added! 🎂`,
+        description: `${template.name} template added to your cart.`,
+      });
+      
+      // Redirect to cart
+      setLocation('/cart');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to add ${template.name} template. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFlavorChange = (layerIndex: number, flavor: string) => {
@@ -225,31 +225,6 @@ export default function CakeBuilder() {
     updateConfig({ dietaryRestrictions: newRestrictions });
   };
 
-  const handleCustomerSubmit = (customerData: any) => {
-    // Store customer data and move to order summary step
-    updateConfig(customerData);
-    nextStep(); // Go to order summary step (step 9)
-  };
-
-  const handleOrderConfirm = () => {
-    // Ensure required customer fields are present
-    if (!cakeConfig.customerName || !cakeConfig.customerEmail) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide your contact information first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const orderData = {
-      ...cakeConfig,
-      totalPrice: pricing?.totalPrice || 0,
-    };
-    
-    console.log("Order data being submitted:", orderData);
-    createOrderMutation.mutate(orderData);
-  };
 
   const handleAddToCart = () => {
     // Ensure required customer fields are present for pricing
@@ -329,7 +304,11 @@ export default function CakeBuilder() {
                         {
                           id: "6inch",
                           onClick: () => {
-                            updateConfig({ servings: 6 });
+                            updateConfig({ 
+                              servings: 6,
+                              sixInchCakes: 1,
+                              eightInchCakes: 0
+                            });
                             nextStep();
                           },
                           className: "btn-touch btn-primary",
@@ -349,7 +328,11 @@ export default function CakeBuilder() {
                         {
                           id: "8inch",
                           onClick: () => {
-                            updateConfig({ servings: 8 });
+                            updateConfig({ 
+                              servings: 10,
+                              sixInchCakes: 0,
+                              eightInchCakes: 1
+                            });
                             nextStep();
                           },
                           className: "btn-touch btn-primary",
@@ -402,8 +385,9 @@ export default function CakeBuilder() {
                       <Button 
                         variant="outline"
                         className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
-                        onClick={() => {
-                          updateConfig({
+                        onClick={async () => {
+                          // Configure Father's Day cake
+                          const fathersDayConfig = {
                             template: "fathers-day",
                             layers: 1,
                             shape: "round" as const,
@@ -414,11 +398,39 @@ export default function CakeBuilder() {
                             servings: 6,
                             sixInchCakes: 1,
                             eightInchCakes: 0,
-                          });
-                          goToStep(7); // Go to Size & Servings step instead of customer form
+                          };
+                          
+                          // Calculate price for Father's Day template
+                          try {
+                            const response = await apiRequest("/api/calculate-price", "POST", fathersDayConfig);
+                            const pricing = await response.json();
+                            
+                            // Create cart item and add directly to cart
+                            const cartItem = createCustomCakeCartItem(
+                              fathersDayConfig,
+                              pricing.totalPrice,
+                              1
+                            );
+                            
+                            addToCart(cartItem);
+                            
+                            toast({
+                              title: "Father's Day Cake Added! 👨‍👦",
+                              description: "Father's Day special cake added to your cart.",
+                            });
+                            
+                            // Redirect to cart
+                            setLocation('/cart');
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to add Father's Day cake. Please try again.",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                       >
-                        👨‍👦 Father's Day Special Cake
+                        👨‍👦 Add Father's Day Cake to Cart
                       </Button>
                     </>
                   )}
@@ -433,8 +445,9 @@ export default function CakeBuilder() {
                   <Button 
                     variant="outline"
                     className="w-full btn-touch bg-blue-50 border-blue-300 text-blue-800 hover:bg-blue-100"
-                    onClick={() => {
-                      updateConfig({
+                    onClick={async () => {
+                      // Configure Father's Day cake
+                      const fathersDayConfig = {
                         template: "fathers-day",
                         layers: 1,
                         shape: "round" as const,
@@ -445,11 +458,39 @@ export default function CakeBuilder() {
                         servings: 6,
                         sixInchCakes: 1,
                         eightInchCakes: 0,
-                      });
-                      goToStep(7); // Go to Size & Servings step instead of customer form
+                      };
+                      
+                      // Calculate price for Father's Day template
+                      try {
+                        const response = await apiRequest("/api/calculate-price", "POST", fathersDayConfig);
+                        const pricing = await response.json();
+                        
+                        // Create cart item and add directly to cart
+                        const cartItem = createCustomCakeCartItem(
+                          fathersDayConfig,
+                          pricing.totalPrice,
+                          1
+                        );
+                        
+                        addToCart(cartItem);
+                        
+                        toast({
+                          title: "Father's Day Cake Added! 👨‍👦",
+                          description: "Father's Day special cake added to your cart.",
+                        });
+                        
+                        // Redirect to cart
+                        setLocation('/cart');
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to add Father's Day cake. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
                     }}
                   >
-                    👨‍👦 Father's Day Special Cake
+                    👨‍👦 Add Father's Day Cake to Cart
                   </Button>
 
                   {/* GENERAL TEMPLATES - FEATURE FLAG CONTROLLED */}
@@ -1103,394 +1144,28 @@ export default function CakeBuilder() {
                   </Card>
                 )}
 
-                <Button className="w-full btn-touch btn-primary" onClick={nextStep}>
-                  📞 Continue to Contact Info
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </motion.div>
-            )}
-
-            {/* Step 8: Customer Information */}
-            {currentStep === 8 && (
-              <motion.div
-                key="customer"
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                    🎉 Almost Done!
-                  </h2>
-                  <p className="text-gray-600">Enter your contact details to complete your order</p>
-                </div>
-
-                <CustomerForm 
-                  onSubmit={handleCustomerSubmit}
-                  isLoading={createOrderMutation.isPending}
-                />
-              </motion.div>
-            )}
-
-            {/* Step 9: Order Summary & Final Confirmation */}
-            {currentStep === 9 && (
-              <motion.div
-                key="summary"
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                    📋 Order Summary
-                  </h2>
-                  <p className="text-gray-600">
-                    {cart.items.length > 0 
-                      ? "Review your order before checkout" 
-                      : "Review your custom cake before placing your order"}
-                  </p>
-                </div>
-
-                {/* Customer Details */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Mail className="w-5 h-5 mr-2" />
-                      Customer Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Name:</span>
-                      <span className="font-medium">{cakeConfig.customerName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Email:</span>
-                      <span className="font-medium">{cakeConfig.customerEmail}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Phone:</span>
-                      <span className="font-medium">{cakeConfig.customerPhone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Delivery:</span>
-                      <span className="font-medium">
-                        {cakeConfig.deliveryMethod === 'pickup' ? 'Store Pickup' : 'Home Delivery'}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Show cart items if available, otherwise show custom cake details */}
-                {cart.items.length > 0 ? (
-                  <>
-                    {/* Cart Items */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Your Order Items</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {cart.items.map((item, index) => (
-                          <div key={item.id} className="border-b pb-4 last:border-0">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-semibold">{item.name}</h4>
-                                {item.type === 'custom' && item.cakeConfig && (
-                                  <div className="text-sm text-gray-600 mt-1 space-y-1">
-                                    <div>• {item.cakeConfig.layers} layer{item.cakeConfig.layers > 1 ? 's' : ''}, {item.cakeConfig.shape} shape</div>
-                                    <div>• Flavors: {item.cakeConfig.flavors.join(', ')}</div>
-                                    <div>• Icing: {item.cakeConfig.icingType}</div>
-                                    {item.cakeConfig.decorations.length > 0 && (
-                                      <div>• Decorations: {item.cakeConfig.decorations.join(', ')}</div>
-                                    )}
-                                    {item.cakeConfig.message && (
-                                      <div>• Message: "{item.cakeConfig.message}"</div>
-                                    )}
-                                  </div>
-                                )}
-                                {item.type === 'specialty' && item.description && (
-                                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                <div className="font-semibold">RM {(item.price / 100).toFixed(2)}</div>
-                                {item.quantity > 1 && (
-                                  <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div className="pt-4 border-t">
-                          <div className="flex justify-between items-center text-lg font-bold">
-                            <span>Subtotal ({cart.totalItems} items)</span>
-                            <span>RM {(cart.totalPrice / 100).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <>
-                    {/* Single Custom Cake Details (original code) */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Your Custom Cake</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CakePreview />
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Cake Details</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Size:</span>
-                      <span className="font-medium">
-                        {cakeConfig.sixInchCakes > 0 && `${cakeConfig.sixInchCakes}×6" `}
-                        {cakeConfig.eightInchCakes > 0 && `${cakeConfig.eightInchCakes}×8" `}
-                        cake{(cakeConfig.sixInchCakes + cakeConfig.eightInchCakes) > 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Layers:</span>
-                      <span className="font-medium">
-                        {cakeConfig.layers} {cakeConfig.layers === 1 ? 'layer' : 'layers'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Flavors:</span>
-                      <span className="font-medium">
-                        {cakeConfig.flavors.length > 0 ? cakeConfig.flavors.join(', ') : 'Butter'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shape:</span>
-                      <span className="font-medium capitalize">{cakeConfig.shape}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Icing:</span>
-                      <span className="font-medium">
-                        {(() => {
-                          const icingTypes = {
-                            butter: "Butter",
-                            buttercream: "Buttercream", 
-                            whipped: "Whipped",
-                            chocolate: "Chocolate",
-                            fondant: "Fondant"
-                          };
-                          return icingTypes[cakeConfig.icingType as keyof typeof icingTypes] || cakeConfig.icingType;
-                        })()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Decorations:</span>
-                      <span className="font-medium">
-                        {cakeConfig.decorations.length > 0 
-                          ? cakeConfig.decorations.join(", ") 
-                          : "None"}
-                      </span>
-                    </div>
-                    {cakeConfig.message && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Message:</span>
-                        <span className="font-medium">"{cakeConfig.message}"</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Servings:</span>
-                      <span className="font-medium">{cakeConfig.servings} people</span>
-                    </div>
-                    {cakeConfig.dietaryRestrictions.length > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Dietary:</span>
-                        <span className="font-medium">
-                          {cakeConfig.dietaryRestrictions.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-
-                {pricing && cart.items.length === 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Price Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">
-                          Base: {cakeConfig.sixInchCakes > 0 && `${cakeConfig.sixInchCakes}×6" `}
-                          {cakeConfig.eightInchCakes > 0 && `${cakeConfig.eightInchCakes}×8" `}
-                          ({cakeConfig.layers} {cakeConfig.layers === 1 ? 'layer' : 'layers'})
-                        </span>
-                        <span>RM {(pricing.breakdown.base / 100).toFixed(2)}</span>
-                      </div>
-                      
-                      {pricing.breakdown.layers > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Extra layers: +{cakeConfig.layers - 1}</span>
-                          <span>RM {(pricing.breakdown.layers / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      {pricing.breakdown.flavors > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            Premium flavors: {cakeConfig.flavors.includes('chocolate') && 'Chocolate '}
-                            {cakeConfig.flavors.filter(f => f.includes('poppyseed')).length > 0 && 'Poppyseed'}
-                          </span>
-                          <span>RM {(pricing.breakdown.flavors / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      {pricing.breakdown.shape > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            {cakeConfig.shape === 'heart' ? 'Heart' : cakeConfig.shape} shape upgrade
-                          </span>
-                          <span>RM {(pricing.breakdown.shape / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      {pricing.breakdown.decorations > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            Decorations: {cakeConfig.decorations.map(d => 
-                              d === 'flowers' ? 'Flowers' :
-                              d === 'gold-leaf' ? 'Gold leaf' :
-                              d === 'fresh-fruit' ? 'Fresh fruit' :
-                              d === 'sprinkles' ? 'Sprinkles' :
-                              d === 'happy-birthday' ? 'Birthday topper' :
-                              d === 'anniversary' ? 'Anniversary topper' : d
-                            ).join(', ')}
-                          </span>
-                          <span>RM {(pricing.breakdown.decorations / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      {pricing.breakdown.icing > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            {cakeConfig.icingType === 'chocolate' ? 'Chocolate' : 
-                             cakeConfig.icingType === 'buttercream' ? 'Buttercream' :
-                             cakeConfig.icingType === 'fondant' ? 'Fondant' :
-                             cakeConfig.icingType === 'whipped' ? 'Whipped' : 
-                             cakeConfig.icingType} icing upgrade
-                          </span>
-                          <span>RM {(pricing.breakdown.icing / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      {pricing.breakdown.dietary > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">
-                            {cakeConfig.dietaryRestrictions.map(d => 
-                              d === 'eggless' ? 'Eggless' :
-                              d === 'vegan' ? 'Vegan' :
-                              d === 'halal' ? 'Halal' : d
-                            ).join(', ')} option
-                          </span>
-                          <span>RM {(pricing.breakdown.dietary / 100).toFixed(2)}</span>
-                        </div>
-                      )}
-                      
-                      <Separator />
-                      <div className="flex justify-between font-bold text-xl text-primary">
-                        <span>Total</span>
-                        <span>RM {(pricing.totalPrice / 100).toFixed(2)}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-4">Delivery Options</h3>
-                    <RadioGroup 
-                      value={cakeConfig.deliveryMethod} 
-                      onValueChange={(value: "pickup" | "delivery") => 
-                        updateConfig({ deliveryMethod: value })
-                      }
-                    >
-                      <div className="flex items-center space-x-2 p-3 border-2 border-primary bg-primary/5 rounded-lg">
-                        <RadioGroupItem value="pickup" id="pickup" />
-                        <div className="flex-1">
-                          <Label htmlFor="pickup" className="font-medium">Store Pickup</Label>
-                          <div className="text-sm text-gray-600">Ready in 2-3 business days</div>
-                        </div>
-                        <div className="font-medium text-green-600">FREE</div>
-                      </div>
-                      <div className="flex items-center space-x-2 p-3 border-2 border-gray-200 rounded-lg">
-                        <RadioGroupItem value="delivery" id="delivery" />
-                        <div className="flex-1">
-                          <Label htmlFor="delivery" className="font-medium">Home Delivery</Label>
-                          <div className="text-sm text-gray-600">Same day or next day available</div>
-                        </div>
-                        <div className="font-medium">RM 15.00</div>
-                      </div>
-                    </RadioGroup>
-                  </CardContent>
-                </Card>
-
-                {/* Final Confirmation Button */}
-                <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 rounded-lg text-center">
-                  <div className="text-lg font-semibold mb-2">Total Amount</div>
-                  <div className="text-3xl font-bold">
-                    RM {cart.items.length > 0 
-                      ? (cart.totalPrice / 100).toFixed(2) 
-                      : pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'}
-                  </div>
-                  {cakeConfig.deliveryMethod === 'delivery' && (
-                    <div className="text-sm opacity-90 mt-1">+ RM 15.00 delivery</div>
-                  )}
-                  <div className="text-sm opacity-90 mt-2">
-                    Ready in 2-3 business days
-                  </div>
-                </div>
-
                 <div className="space-y-3 mb-32">
                   <Button 
                     className="w-full btn-touch btn-primary h-12"
-                    onClick={handleOrderConfirm}
-                    disabled={createOrderMutation.isPending}
+                    onClick={handleAddToCart}
                   >
-                    {createOrderMutation.isPending ? "🎂 Processing..." : "🎉 Checkout"}
+                    <Plus className="mr-2 h-5 w-5" />
+                    Add to Cart - RM {pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'}
                   </Button>
                   
                   <Button 
                     variant="outline" 
-                    className="w-full btn-touch h-12"
-                    onClick={handleAddToCart}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add to Cart (RM {cart.items.length > 0 
-                      ? (cart.totalPrice / 100).toFixed(2) 
-                      : pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'})
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
                     className="w-full btn-touch"
-                    onClick={() => goToStep(8)}
+                    onClick={() => setLocation('/cart')}
                   >
-                    ← Back to Edit Details
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    View Cart ({cart.totalItems} items)
                   </Button>
                 </div>
               </motion.div>
             )}
+
+
           </AnimatePresence>
         </div>
       </div>

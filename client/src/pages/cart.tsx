@@ -5,10 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCakeBuilder } from "@/lib/cake-builder-store";
 import { CartItem } from "@/types/cart";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCakeBuilder();
+  const [, setLocation] = useLocation();
 
   const formatPrice = (priceInCents: number) => {
     return `RM ${(priceInCents / 100).toFixed(2)}`;
@@ -194,8 +195,15 @@ export default function Cart() {
                   </div>
                   
                   <div className="space-y-3">
-                    <Button className="w-full" size="lg" asChild>
-                      <Link href="/checkout">Proceed to Checkout</Link>
+                    <Button 
+                      className="w-full" 
+                      size="lg" 
+                      onClick={() => {
+                        console.log("Navigating to checkout, cart items:", cart.items.length);
+                        setLocation("/checkout");
+                      }}
+                    >
+                      Proceed to Checkout
                     </Button>
                     <Link href="/cakes">
                       <Button variant="outline" className="w-full">
