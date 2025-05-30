@@ -319,7 +319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send email notifications
         await sendOrderEmails(order);
         
-        res.status(201).json(order);
+        // Fetch the complete order with its items for the response
+        const orderItems = await storage.getOrderItemsByOrderId(order.id);
+        const completeOrder = { ...order, orderItems };
+        
+        res.status(201).json(completeOrder);
       }
       
     } catch (error) {
