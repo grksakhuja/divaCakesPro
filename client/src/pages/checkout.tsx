@@ -31,30 +31,49 @@ export default function Checkout() {
   const { toast } = useToast();
   const [orderItems, setOrderItems] = useState<CheckoutItem[]>([]);
   const [orderTotal, setOrderTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if coming from cart or single item
   useEffect(() => {
-    if (cart.items.length > 0) {
-      // Coming from cart
-      const items: CheckoutItem[] = cart.items.map(item => ({
-        id: item.id,
-        name: item.name,
-        type: item.type,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        totalPrice: item.price * item.quantity,
-        description: item.description,
-        image: item.image,
-        cakeConfig: item.cakeConfig,
-        specialtyId: item.specialtyId,
-      }));
-      setOrderItems(items);
-      setOrderTotal(cart.totalPrice);
-    } else {
-      // No items in cart, redirect to home
-      setLocation("/");
-    }
-  }, [cart, setLocation]);
+    console.log("Checkout page mounted, cart:", cart);
+    console.log("Cart items:", cart?.items);
+    console.log("Cart total price:", cart?.totalPrice);
+    
+    // Give zustand persist a moment to restore state from localStorage
+    const timer = setTimeout(() => {
+      console.log("After timeout, cart items:", cart?.items?.length || 0);
+      
+      if (cart && cart.items && cart.items.length > 0) {
+        // Coming from cart
+        const items: CheckoutItem[] = cart.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          type: item.type,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.price * item.quantity,
+          description: item.description,
+          image: item.image,
+          cakeConfig: item.cakeConfig,
+          specialtyId: item.specialtyId,
+        }));
+        setOrderItems(items);
+        setOrderTotal(cart.totalPrice);
+        setIsLoading(false);
+      } else {
+        // No items in cart, redirect to cart page
+        console.log("Cart is empty or undefined, redirecting to cart page");
+        toast({
+          title: "Cart is empty",
+          description: "Please add items to your cart before checkout.",
+          variant: "destructive",
+        });
+        setLocation("/cart");
+      }
+    }, 500); // Increased timeout to ensure cart state is restored
+
+    return () => clearTimeout(timer);
+  }, [cart, setLocation, toast]);
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
@@ -141,11 +160,11 @@ export default function Checkout() {
           <div><strong>Shape:</strong> {config.shape}</div>
           <div><strong>Layers:</strong> {config.layers}</div>
           <div><strong>Icing:</strong> {config.icingType}</div>
-          <div className="col-span-2"><strong>Flavors:</strong> {config.flavors.join(', ')}</div>
-          {config.decorations.length > 0 && (
+          <div className="col-span-2"><strong>Flavors:</strong> {config.flavors?.join(', ') || 'None'}</div>
+          {config.decorations && config.decorations.length > 0 && (
             <div className="col-span-2"><strong>Decorations:</strong> {config.decorations.join(', ')}</div>
           )}
-          {config.dietaryRestrictions.length > 0 && (
+          {config.dietaryRestrictions && config.dietaryRestrictions.length > 0 && (
             <div className="col-span-2"><strong>Dietary:</strong> {config.dietaryRestrictions.join(', ')}</div>
           )}
           {config.message && (
@@ -155,6 +174,17 @@ export default function Checkout() {
       </div>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading checkout...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (orderItems.length === 0) {
     return (
@@ -214,7 +244,7 @@ export default function Checkout() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {orderItems.map((item) => (
+                  {orderItems && orderItems.length > 0 ? orderItems.map((item) => (
                     <div key={item.id} className="border rounded-lg p-4">
                       <div className="flex gap-4">
                         {item.image && (
@@ -251,13 +281,15 @@ export default function Checkout() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-gray-500 text-center py-4">No items in order</p>
+                  )}
 
                   <Separator />
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Subtotal ({orderItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
+                      <span>Subtotal ({orderItems?.reduce((sum, item) => sum + item.quantity, 0) || 0} items)</span>
                       <span>{formatPrice(orderTotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm">

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCakeBuilder } from "@/lib/cake-builder-store";
 import { CartItem } from "@/types/cart";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface CartSidebarProps {
   trigger: React.ReactNode;
@@ -15,6 +15,7 @@ interface CartSidebarProps {
 export function CartSidebar({ trigger }: CartSidebarProps) {
   const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCakeBuilder();
   const [isOpen, setIsOpen] = useState(false);
+  const [, setLocation] = useLocation();
 
   const formatPrice = (priceInCents: number) => {
     return `RM ${(priceInCents / 100).toFixed(2)}`;
@@ -145,8 +146,15 @@ export function CartSidebar({ trigger }: CartSidebarProps) {
             </div>
             
             <div className="space-y-2">
-              <Button className="w-full" size="lg" asChild>
-                <Link href="/checkout">Proceed to Checkout</Link>
+              <Button 
+                className="w-full" 
+                size="lg" 
+                onClick={() => {
+                  setIsOpen(false);
+                  setLocation("/checkout");
+                }}
+              >
+                Proceed to Checkout
               </Button>
               <div className="flex gap-2">
                 <Button 
