@@ -8,7 +8,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { isTemplateApiEnabled, featureFlags } from "./feature-flags";
-import { sendOrderEmails } from './email-service';
+import { sendOrderEmails, sendContactEmail } from './email-service';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -196,6 +196,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: "Invalid order data", errors: error.errors });
       } else {
         res.status(500).json({ message: "Failed to create order" });
+      }
+    }
+  });
+
+  // Create order from cart checkout (new unified endpoint)
+  app.post("/api/checkout", async (req, res) => {
+    try {
+      console.log("Processing checkout with data:", req.body);
+      const { customer, items, totalPrice } = req.body;
+      
+      if (!items || items.length === 0) {
+        return res.status(400).json({ message: "No items in order" });
+      }
+      
+      // Check if this is a single custom cake (use legacy format)
+      if (items.length === 1 && items[0].type === 'custom' && items[0].cakeConfig) {
+        const item = items[0];
+        const cakeConfig = item.cakeConfig;
+        
+        const orderData = {
+          customerName: customer.customerName,
+          customerEmail: customer.customerEmail,
+          customerPhone: customer.customerPhone,
+          deliveryMethod: customer.deliveryMethod,
+          specialInstructions: customer.specialInstructions, // Keep user's actual special instructions
+          layers: cakeConfig.layers,
+          shape: cakeConfig.shape,
+          flavors: cakeConfig.flavors,
+          icingColor: cakeConfig.icingColor,
+          icingType: cakeConfig.icingType,
+          decorations: cakeConfig.decorations,
+          message: cakeConfig.message || "",
+          messageFont: cakeConfig.messageFont || "classic",
+          dietaryRestrictions: cakeConfig.dietaryRestrictions,
+          servings: cakeConfig.servings,
+          sixInchCakes: cakeConfig.sixInchCakes,
+          eightInchCakes: cakeConfig.eightInchCakes,
+          totalPrice: totalPrice,
+          hasLineItems: false, // Single custom cake uses legacy format
+        };
+        
+        console.log("Creating single custom cake order:", orderData);
+        const validatedData = insertCakeOrderSchema.parse(orderData);
+        const order = await storage.createCakeOrder(validatedData);
+        
+        // Send email notifications
+        await sendOrderEmails(order);
+        
+        res.status(201).json(order);
+      } else {
+        // Multi-item order - use new order_items table
+        console.log("Creating multi-item order with proper line items");
+        
+        // Create main order record
+        const orderData = {
+          customerName: customer.customerName,
+          customerEmail: customer.customerEmail,
+          customerPhone: customer.customerPhone,
+          deliveryMethod: customer.deliveryMethod,
+          specialInstructions: customer.specialInstructions, // Keep user's actual special instructions
+          // Use placeholder values for legacy fields (required by schema)
+          layers: 1,
+          shape: "multi-item",
+          flavors: ["various"],
+          icingColor: "#FFB6C1",
+          icingType: "various",
+          decorations: [],
+          message: "",
+          messageFont: "classic",
+          dietaryRestrictions: [],
+          servings: items.reduce((sum, item) => sum + (item.quantity || 1), 0),
+          sixInchCakes: 0,
+          eightInchCakes: 0,
+          totalPrice: totalPrice,
+          hasLineItems: true, // This order uses the order_items table
+        };
+        
+        console.log("Creating main order record:", orderData);
+        const validatedOrderData = insertCakeOrderSchema.parse(orderData);
+        const order = await storage.createCakeOrder(validatedOrderData);
+        
+        // Create individual order items
+        for (const item of items) {
+          const orderItemData = {
+            orderId: order.id,
+            itemType: item.type,
+            itemName: item.name,
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+            
+            // Custom cake fields (only for custom cakes)
+            ...(item.type === 'custom' && item.cakeConfig && {
+              layers: item.cakeConfig.layers,
+              shape: item.cakeConfig.shape,
+              flavors: item.cakeConfig.flavors,
+              icingColor: item.cakeConfig.icingColor,
+              icingType: item.cakeConfig.icingType,
+              decorations: item.cakeConfig.decorations,
+              message: item.cakeConfig.message,
+              messageFont: item.cakeConfig.messageFont,
+              dietaryRestrictions: item.cakeConfig.dietaryRestrictions,
+              servings: item.cakeConfig.servings,
+              sixInchCakes: item.cakeConfig.sixInchCakes,
+              eightInchCakes: item.cakeConfig.eightInchCakes,
+            }),
+            
+            // Specialty item fields (only for specialty items)
+            ...(item.type !== 'custom' && {
+              specialtyId: item.specialtyId || item.name.toLowerCase().replace(/\s+/g, '-'),
+              specialtyDescription: item.description,
+            }),
+            
+            createdAt: new Date().toISOString(),
+          };
+          
+          console.log("Creating order item:", orderItemData);
+          await storage.createOrderItem(orderItemData);
+        }
+        
+        // Send email notifications
+        await sendOrderEmails(order);
+        
+        res.status(201).json(order);
+      }
+      
+    } catch (error) {
+      console.error("Error processing checkout:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid checkout data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to process checkout" });
       }
     }
   });
@@ -463,6 +595,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting all orders:", error);
       res.status(500).json({ message: "Failed to delete orders" });
+    }
+  });
+
+  // Contact form endpoint
+  app.post("/api/contact", express.json(), async (req, res) => {
+    console.log("🔥 Contact form API endpoint hit!");
+    console.log("📨 Request body:", req.body);
+    
+    try {
+      const contactSchema = z.object({
+        name: z.string().min(1, "Name is required"),
+        email: z.string().email("Valid email is required"),
+        phone: z.string().optional(),
+        subject: z.string().min(1, "Subject is required"),
+        message: z.string().min(1, "Message is required")
+      });
+
+      console.log("🔍 Validating contact form data...");
+      const { name, email, phone, subject, message } = contactSchema.parse(req.body);
+      console.log("✅ Contact form data validated successfully");
+      console.log("📧 About to send contact email with data:", { name, email, phone, subject });
+
+      // Send contact email to admin
+      console.log("📤 Calling sendContactEmail function...");
+      await sendContactEmail({
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        timestamp: new Date().toISOString()
+      });
+      console.log("✅ sendContactEmail function completed successfully");
+
+      console.log("📝 Sending success response to frontend");
+      res.json({ 
+        success: true,
+        message: "Your message has been sent successfully. We'll get back to you soon!" 
+      });
+    } catch (error) {
+      console.error("❌ Error in contact form endpoint:", error);
+      if (error instanceof z.ZodError) {
+        console.error("❌ Zod validation error:", error.errors);
+        return res.status(400).json({ 
+          message: "Invalid form data", 
+          errors: error.errors 
+        });
+      }
+      console.error("❌ General error in contact endpoint:", error.message);
+      res.status(500).json({ 
+        message: "Failed to send message. Please try again later." 
+      });
     }
   });
 

@@ -12,7 +12,9 @@
     "test:all": "node run-all-tests.js",
     "test:smart": "node smart-pricing-test.js",
     "test:basic": "node test-pricing.js",
+    "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx server/seed.ts",
     "postbuild": "mkdir -p dist/server && cp server/pricing-structure.json dist/server/pricing-structure.json"
   },

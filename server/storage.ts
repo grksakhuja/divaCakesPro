@@ -1,4 +1,4 @@
-import { users, cakeOrders, cakeTemplates, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate } from "@shared/schema";
+import { users, cakeOrders, cakeTemplates, orderItems, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -12,6 +12,9 @@ export interface IStorage {
   
   deleteCakeOrder(id: number): Promise<boolean>;
   deleteAllCakeOrders(): Promise<number>;
+  
+  getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]>;
+  createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
   
   getCakeTemplates(): Promise<CakeTemplate[]>;
   getCakeTemplatesByCategory(category: string): Promise<CakeTemplate[]>;
@@ -181,6 +184,16 @@ export class MemStorage implements IStorage {
     return count;
   }
 
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    // In memory storage doesn't support order items yet
+    return [];
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    // In memory storage doesn't support order items yet
+    throw new Error('Order items not supported in memory storage');
+  }
+
   async getCakeTemplates(): Promise<CakeTemplate[]> {
     return Array.from(this.cakeTemplates.values());
   }
@@ -315,6 +328,23 @@ export class DatabaseStorage implements IStorage {
       .values(insertTemplate)
       .returning();
     return template;
+  }
+
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    const orderItemData = {
+      ...insertOrderItem,
+      createdAt: new Date().toISOString(),
+    };
+    
+    const [orderItem] = await db
+      .insert(orderItems)
+      .values(orderItemData)
+      .returning();
+    return orderItem;
   }
 }
 

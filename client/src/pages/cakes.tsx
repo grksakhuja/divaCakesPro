@@ -5,6 +5,10 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCakeBuilder } from "@/lib/cake-builder-store";
+import { createSpecialtyCartItem } from "@/types/cart";
+import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
 
 const specialtyItems = [
   {
@@ -82,6 +86,9 @@ const coconutCandy = [
 ];
 
 export default function Cakes() {
+  const { addToCart } = useCakeBuilder();
+  const { toast } = useToast();
+  
   // Fetch pricing structure
   const { data: pricingStructure, isLoading } = useQuery({
     queryKey: ["/api/pricing-structure"],
@@ -90,6 +97,43 @@ export default function Cakes() {
       return response.json();
     },
   });
+
+  const handleAddToCart = (item: typeof specialtyItems[0] | typeof slicedCakes[0] | typeof coconutCandy[0]) => {
+    if (!pricingStructure) return;
+    
+    let price = 0;
+    let itemType: 'specialty' | 'slice' | 'candy' = 'specialty';
+    
+    // Determine price and type based on item ID
+    if (pricingStructure.specialtyItems?.[item.id]) {
+      price = pricingStructure.specialtyItems[item.id];
+      itemType = item.id.includes('candy') ? 'candy' : 'specialty';
+    } else if (pricingStructure.slicedCakes?.[item.id]) {
+      price = pricingStructure.slicedCakes[item.id];
+      itemType = 'slice';
+    } else {
+      // Fallback to hardcoded price if not in API
+      price = item.price * 100; // convert to cents
+    }
+    
+    const cartItem = createSpecialtyCartItem(
+      item.id,
+      item.name,
+      price,
+      item.description,
+      item.image
+    );
+    
+    // Override type for specific items
+    cartItem.type = itemType;
+    
+    addToCart(cartItem);
+    
+    toast({
+      title: "Added to Cart",
+      description: `${item.name} has been added to your cart.`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -134,7 +178,14 @@ export default function Cakes() {
                         `RM ${((pricingStructure?.specialtyItems?.[item.id] || item.price * 100) / 100).toFixed(2)}`
                       )}
                     </span>
-                    <Button size="sm">Order Now</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAddToCart(item)}
+                      disabled={isLoading}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add to Cart
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -166,7 +217,14 @@ export default function Cakes() {
                         `RM ${((pricingStructure?.slicedCakes?.[cake.id] || cake.price * 100) / 100).toFixed(2)}`
                       )}
                     </span>
-                    <Button size="sm">Order Slice</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAddToCart(cake)}
+                      disabled={isLoading}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add to Cart
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -198,7 +256,14 @@ export default function Cakes() {
                         `RM ${((pricingStructure?.specialtyItems?.[candy.id] || candy.price * 100) / 100).toFixed(2)}`
                       )}
                     </span>
-                    <Button size="sm">Order Now</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAddToCart(candy)}
+                      disabled={isLoading}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add to Cart
+                    </Button>
                   </div>
                 </div>
               </Card>

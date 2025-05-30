@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import ImprovedButtonGrid from "@/components/ui/improved-button-grid";
 import ImprovedSelectionCard from "@/components/ui/improved-selection-card";
+import { createCustomCakeCartItem } from "@/types/cart";
 
 // Add this right after the imports and before the export default function CakeBuilder()
 const SIMPLIFIED_COLOR_PALETTE = [
@@ -68,8 +69,11 @@ export default function CakeBuilder() {
     cakeConfig, 
     updateConfig, 
     nextStep, 
+    prevStep,
     goToStep,
-    resetBuilder 
+    resetBuilder,
+    addToCart,
+    cart
   } = useCakeBuilder();
   
   const { toast } = useToast();
@@ -245,6 +249,35 @@ export default function CakeBuilder() {
     
     console.log("Order data being submitted:", orderData);
     createOrderMutation.mutate(orderData);
+  };
+
+  const handleAddToCart = () => {
+    // Ensure required customer fields are present for pricing
+    if (!pricing?.totalPrice) {
+      toast({
+        title: "Error",
+        description: "Unable to calculate price. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create cart item from current cake configuration
+    const cartItem = createCustomCakeCartItem(
+      cakeConfig,
+      pricing.totalPrice,
+      1 // quantity
+    );
+
+    addToCart(cartItem);
+
+    toast({
+      title: "Added to Cart! 🎂",
+      description: `${cartItem.name} has been added to your cart.`,
+    });
+
+    // Option to view cart or continue building
+    // For now, just show success - user can click cart icon to view
   };
 
   const stepVariants = {
@@ -1061,7 +1094,9 @@ export default function CakeBuilder() {
                           <div className="text-3xl font-bold">
                             RM {(pricing.totalPrice / 100).toFixed(2)}
                           </div>
-                          <div className="text-sm opacity-90">+ delivery</div>
+                          {cakeConfig.deliveryMethod === 'delivery' && (
+                            <div className="text-sm opacity-90">+ delivery</div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -1115,7 +1150,11 @@ export default function CakeBuilder() {
                   <h2 className="text-3xl font-bold text-gray-800 mb-4">
                     📋 Order Summary
                   </h2>
-                  <p className="text-gray-600">Review your custom cake before placing your order</p>
+                  <p className="text-gray-600">
+                    {cart.items.length > 0 
+                      ? "Review your order before checkout" 
+                      : "Review your custom cake before placing your order"}
+                  </p>
                 </div>
 
                 {/* Customer Details */}
@@ -1148,55 +1187,91 @@ export default function CakeBuilder() {
                   </CardContent>
                 </Card>
 
-                {/* Cake Details */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Custom Cake</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <CakePreview />
-                    <div className="mt-4 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Size:</span>
-                        <span className="font-medium">
-                          {cakeConfig.sixInchCakes > 0 && `${cakeConfig.sixInchCakes}×6" `}
-                          {cakeConfig.eightInchCakes > 0 && `${cakeConfig.eightInchCakes}×8" `}
-                          cake{(cakeConfig.sixInchCakes + cakeConfig.eightInchCakes) > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Flavors:</span>
-                        <span className="font-medium">{cakeConfig.flavors.length > 0 ? cakeConfig.flavors.join(', ') : 'Butter'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Icing:</span>
-                        <span className="font-medium">{cakeConfig.icingType}</span>
-                      </div>
-                      {cakeConfig.decorations.length > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Decorations:</span>
-                          <span className="font-medium">{cakeConfig.decorations.join(', ')}</span>
+                {/* Show cart items if available, otherwise show custom cake details */}
+                {cart.items.length > 0 ? (
+                  <>
+                    {/* Cart Items */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Your Order Items</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {cart.items.map((item, index) => (
+                          <div key={item.id} className="border-b pb-4 last:border-0">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-semibold">{item.name}</h4>
+                                {item.type === 'custom' && item.cakeConfig && (
+                                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                                    <div>• {item.cakeConfig.layers} layer{item.cakeConfig.layers > 1 ? 's' : ''}, {item.cakeConfig.shape} shape</div>
+                                    <div>• Flavors: {item.cakeConfig.flavors.join(', ')}</div>
+                                    <div>• Icing: {item.cakeConfig.icingType}</div>
+                                    {item.cakeConfig.decorations.length > 0 && (
+                                      <div>• Decorations: {item.cakeConfig.decorations.join(', ')}</div>
+                                    )}
+                                    {item.cakeConfig.message && (
+                                      <div>• Message: "{item.cakeConfig.message}"</div>
+                                    )}
+                                  </div>
+                                )}
+                                {item.type === 'specialty' && item.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold">RM {(item.price / 100).toFixed(2)}</div>
+                                {item.quantity > 1 && (
+                                  <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <div className="pt-4 border-t">
+                          <div className="flex justify-between items-center text-lg font-bold">
+                            <span>Subtotal ({cart.totalItems} items)</span>
+                            <span>RM {(cart.totalPrice / 100).toFixed(2)}</span>
+                          </div>
                         </div>
-                      )}
-                      {cakeConfig.message && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Message:</span>
-                          <span className="font-medium">"{cakeConfig.message}"</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <>
+                    {/* Single Custom Cake Details (original code) */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Your Custom Cake</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CakePreview />
+                      </CardContent>
+                    </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Order Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Cake Details</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Size:</span>
+                      <span className="font-medium">
+                        {cakeConfig.sixInchCakes > 0 && `${cakeConfig.sixInchCakes}×6" `}
+                        {cakeConfig.eightInchCakes > 0 && `${cakeConfig.eightInchCakes}×8" `}
+                        cake{(cakeConfig.sixInchCakes + cakeConfig.eightInchCakes) > 1 ? 's' : ''}
+                      </span>
+                    </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Layers:</span>
                       <span className="font-medium">
-                        {cakeConfig.layers} {cakeConfig.layers === 1 ? 'layer' : 'layers'} ({cakeConfig.flavors.join(", ")})
+                        {cakeConfig.layers} {cakeConfig.layers === 1 ? 'layer' : 'layers'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Flavors:</span>
+                      <span className="font-medium">
+                        {cakeConfig.flavors.length > 0 ? cakeConfig.flavors.join(', ') : 'Butter'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1244,10 +1319,12 @@ export default function CakeBuilder() {
                         </span>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
 
-                {pricing && (
+                {pricing && cart.items.length === 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Price Breakdown</CardTitle>
@@ -1372,8 +1449,13 @@ export default function CakeBuilder() {
                 <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 rounded-lg text-center">
                   <div className="text-lg font-semibold mb-2">Total Amount</div>
                   <div className="text-3xl font-bold">
-                    RM {pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'}
+                    RM {cart.items.length > 0 
+                      ? (cart.totalPrice / 100).toFixed(2) 
+                      : pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'}
                   </div>
+                  {cakeConfig.deliveryMethod === 'delivery' && (
+                    <div className="text-sm opacity-90 mt-1">+ RM 15.00 delivery</div>
+                  )}
                   <div className="text-sm opacity-90 mt-2">
                     Ready in 2-3 business days
                   </div>
@@ -1385,11 +1467,22 @@ export default function CakeBuilder() {
                     onClick={handleOrderConfirm}
                     disabled={createOrderMutation.isPending}
                   >
-                    {createOrderMutation.isPending ? "🎂 Placing Order..." : "🎉 Confirm & Place Order"}
+                    {createOrderMutation.isPending ? "🎂 Processing..." : "🎉 Checkout"}
                   </Button>
                   
                   <Button 
                     variant="outline" 
+                    className="w-full btn-touch h-12"
+                    onClick={handleAddToCart}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add to Cart (RM {cart.items.length > 0 
+                      ? (cart.totalPrice / 100).toFixed(2) 
+                      : pricing ? (pricing.totalPrice / 100).toFixed(2) : '0.00'})
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
                     className="w-full btn-touch"
                     onClick={() => goToStep(8)}
                   >

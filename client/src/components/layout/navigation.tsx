@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, ShoppingCart, Cake } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CartIcon } from "@/components/cart/cart-icon";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -48,7 +49,8 @@ export function Navigation() {
             ))}
           </div>
           
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center space-x-3">
+            <CartIcon />
             <Link href="/order">
               <Button className="bg-pink-500 hover:bg-pink-600">
                 <ShoppingCart className="mr-2 h-4 w-4" />
@@ -59,7 +61,8 @@ export function Navigation() {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="flex md:hidden ml-auto">
+        <div className="flex md:hidden ml-auto items-center space-x-2">
+          <CartIcon />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">

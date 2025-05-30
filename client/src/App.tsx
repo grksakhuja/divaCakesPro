@@ -12,7 +12,10 @@ import AdminLogin from "@/pages/admin-login";
 import NotFound from "@/pages/not-found";
 import Gallery from "@/pages/gallery";
 import About from "@/pages/about";
+import Contact from "@/pages/contact";
 import Cakes from "@/pages/cakes";
+import Cart from "@/pages/cart";
+import Checkout from "@/pages/checkout";
 
 function Router() {
   return (
@@ -42,9 +45,24 @@ function Router() {
           <About />
         </Layout>
       </Route>
+      <Route path="/contact">
+        <Layout>
+          <Contact />
+        </Layout>
+      </Route>
       <Route path="/cakes">
         <Layout>
           <Cakes />
+        </Layout>
+      </Route>
+      <Route path="/cart">
+        <Layout>
+          <Cart />
+        </Layout>
+      </Route>
+      <Route path="/checkout">
+        <Layout>
+          <Checkout />
         </Layout>
       </Route>
       <Route path="/admin/login" component={AdminLogin} />

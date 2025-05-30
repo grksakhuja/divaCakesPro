@@ -58,9 +58,9 @@ const testCases = [
     },
     calculateExpected: (pricing) => ({ 
       basePrice: pricing.basePrices['6inch'], 
-      flavorPrice: 0, 
+      flavorPrice: pricing.flavorPrices.chocolate || 0, 
       decorationTotal: pricing.decorationPrices.flowers,
-      totalPrice: pricing.basePrices['6inch'] + pricing.decorationPrices.flowers
+      totalPrice: pricing.basePrices['6inch'] + (pricing.flavorPrices.chocolate || 0) + pricing.decorationPrices.flowers
     })
   },
   {
@@ -148,19 +148,21 @@ const testCases = [
     calculateExpected: (pricing) => {
       const basePrice = pricing.basePrices['6inch'] + pricing.basePrices['8inch'];
       const layerPrice = pricing.layerPrice * 2;
+      const flavorPrice = ((pricing.flavorPrices.chocolate || 0) + (pricing.flavorPrices.lemon || 0)) * 2;
       const shapePrice = pricing.shapePrices.heart * 2;
       const decorationTotal = pricing.decorationPrices['happy-birthday'] * 2;
       const icingPrice = pricing.icingTypes.whipped * 2;
       const dietaryUpcharge = pricing.dietaryPrices.vegan * 2;
       
       return {
-        basePrice: basePrice + layerPrice,
+        basePrice: basePrice,
         layerPrice: layerPrice,
+        flavorPrice: flavorPrice,
         shapePrice: shapePrice,
         decorationTotal: decorationTotal,
         icingPrice: icingPrice,
         dietaryUpcharge: dietaryUpcharge,
-        totalPrice: basePrice + layerPrice + shapePrice + decorationTotal + icingPrice + dietaryUpcharge
+        totalPrice: basePrice + layerPrice + flavorPrice + shapePrice + decorationTotal + icingPrice + dietaryUpcharge
       };
     }
   },
