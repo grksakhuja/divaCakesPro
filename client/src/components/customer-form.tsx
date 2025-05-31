@@ -216,7 +216,7 @@ export default function CustomerForm({ onSubmit, isLoading }: CustomerFormProps)
               className="w-full btn-touch btn-primary h-12"
               disabled={isLoading}
             >
-              {isLoading ? "Creating Order Summary..." : "Continue to Order Summary"}
+              {isLoading ? "Processing Order..." : "Complete Order"}
             </Button>
           </form>
         </Form>

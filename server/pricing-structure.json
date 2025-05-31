@@ -39,5 +39,73 @@
   },
   "templatePrices": {
     "fathers-day": 1000
+  },
+  "cakes": {
+    "specialty-cakes": {
+      "cheesecake-whole": {
+        "price": 8500,
+        "name": "Classic Cheesecake",
+        "description": "Rich and creamy New York style cheesecake",
+        "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=300&fit=crop",
+        "category": "Whole Cake"
+      },
+      "pavlova": {
+        "price": 2100,
+        "name": "Classic Pavlova",
+        "description": "Light meringue base topped with fresh whipped cream",
+        "image": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=300&fit=crop",
+        "category": "Specialty Cakes Slices"
+      },
+      "matcha-pavlova": {
+        "price": 2100,
+        "name": "Matcha Pavlova",
+        "description": "Japanese matcha-flavored meringue with cream",
+        "image": "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=400&h=300&fit=crop",
+        "category": "Specialty Cakes Slices"
+      }
+    },
+    "cake-slices": {
+      "orange-poppyseed": {
+        "price": 700,
+        "name": "Orange Poppy Seed",
+        "description": "A slice of our lightened up orange poppy seed pound cake. Glazed with orange syrup",
+        "image": "https://images.unsplash.com/photo-1536599524557-5f784dd53282?w=400&h=300&fit=crop",
+        "category": "Cake Slices"
+      },
+      "butter-cake": {
+        "price": 700,
+        "name": "Mum's Old School Butter",
+        "description": "A slice of our butter cake made from finest ingredients. Best served with coffee or tea",
+        "image": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
+        "category": "Cake Slices"
+      },
+      "chocolate-fudge": {
+        "price": 700,
+        "name": "Chocolate Fudge Cake",
+        "description": "A slice of our chocolate cake topped with homemade rich ganache",
+        "image": "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=400&h=300&fit=crop",
+        "category": "Cake Slices"
+      }
+    },
+    "coconut-candy": {
+      "coconut-candy-og": {
+        "price": 4200,
+        "name": "The OG Coconut",
+        "description": "The original coconut candy (16 pcs, 3cm x 3cm)",
+        "image": "https://images.unsplash.com/photo-1548848221-0c2e497ed557?w=400&h=300&fit=crop"
+      },
+      "coconut-candy-pandan": {
+        "price": 4200,
+        "name": "Pandan Gula Melaka",
+        "description": "Pandan Gula Melaka coconut candy (16pcs, 3cm x 3cm)",
+        "image": "https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=400&h=300&fit=crop"
+      },
+      "coconut-candy-raspberry": {
+        "price": 4200,
+        "name": "Love O' not Raspberry",
+        "description": "Raspberry flavored coconut candy (16pcs)",
+        "image": "https://images.unsplash.com/photo-1481391319762-47dff72954d9?w=400&h=300&fit=crop"
+      }
+    }
   }
 }

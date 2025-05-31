@@ -7,6 +7,31 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Clock, MapPin, Phone, Mail, ArrowLeft, Share2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface OrderItem {
+  id: number;
+  orderId: number;
+  itemType: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  layers?: number;
+  shape?: string;
+  flavors?: string[];
+  icingColor?: string;
+  icingType?: string;
+  decorations?: string[];
+  message?: string;
+  messageFont?: string;
+  dietaryRestrictions?: string[];
+  servings?: number;
+  sixInchCakes?: number;
+  eightInchCakes?: number;
+  specialtyId?: string;
+  specialtyDescription?: string;
+  createdAt: string;
+}
+
 interface OrderDetails {
   id: number;
   customerName: string;
@@ -26,6 +51,9 @@ interface OrderDetails {
   deliveryMethod: string;
   orderDate: string;
   status: string;
+  hasLineItems?: boolean;
+  orderItems?: OrderItem[];
+  specialInstructions?: string;
 }
 
 export default function OrderConfirmation() {
@@ -145,62 +173,126 @@ export default function OrderConfirmation() {
           </CardContent>
         </Card>
 
-        {/* Cake Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Cake Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Size:</span>
-              <span className="font-medium">
-                {orderDetails.sixInchCakes > 0 && `${orderDetails.sixInchCakes}x 6-inch`}
-                {orderDetails.sixInchCakes > 0 && orderDetails.eightInchCakes > 0 && " + "}
-                {orderDetails.eightInchCakes > 0 && `${orderDetails.eightInchCakes}x 8-inch`}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Layers:</span>
-              <span className="font-medium">
-                {orderDetails.layers} {orderDetails.layers === 1 ? 'layer' : 'layers'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Shape:</span>
-              <span className="font-medium capitalize">{orderDetails.shape}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Flavors:</span>
-              <span className="font-medium">
-                {orderDetails.flavors.length > 0 ? orderDetails.flavors.join(", ") : "Vanilla"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Icing:</span>
-              <span className="font-medium">
-                {getIcingDisplayName(orderDetails.icingType)}
-              </span>
-            </div>
-            {orderDetails.decorations.length > 0 && (
+        {/* Order Items */}
+        {orderDetails.hasLineItems && orderDetails.orderItems ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Order Items ({orderDetails.orderItems.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {orderDetails.orderItems.map((item, index) => (
+                <div key={item.id} className="border-b pb-4 last:border-b-0 last:pb-0">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-semibold text-lg">{item.itemName}</h4>
+                      <p className="text-sm text-gray-600 capitalize">{item.itemType}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">Qty: {item.quantity}</div>
+                      <div className="text-sm text-gray-600">RM {(item.unitPrice / 100).toFixed(2)} each</div>
+                    </div>
+                  </div>
+                  
+                  {item.itemType === 'custom' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm bg-gray-50 p-3 rounded">
+                      <div><strong>Size:</strong> {item.sixInchCakes}×6" + {item.eightInchCakes}×8"</div>
+                      <div><strong>Layers:</strong> {item.layers}</div>
+                      <div><strong>Shape:</strong> {item.shape}</div>
+                      <div><strong>Flavors:</strong> {item.flavors?.join(', ')}</div>
+                      <div><strong>Icing:</strong> {getIcingDisplayName(item.icingType || '')}</div>
+                      {item.decorations && item.decorations.length > 0 && (
+                        <div><strong>Decorations:</strong> {item.decorations.join(', ')}</div>
+                      )}
+                      {item.message && (
+                        <div className="md:col-span-2"><strong>Message:</strong> "{item.message}"</div>
+                      )}
+                      {item.dietaryRestrictions && item.dietaryRestrictions.length > 0 && (
+                        <div><strong>Dietary:</strong> {item.dietaryRestrictions.join(', ')}</div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {item.itemType !== 'custom' && item.specialtyDescription && (
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">{item.specialtyDescription}</p>
+                  )}
+                  
+                  <div className="text-right mt-3 pt-3 border-t">
+                    <span className="font-semibold text-lg">RM {(item.totalPrice / 100).toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : (
+          /* Single Custom Cake Details */
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Custom Cake Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Decorations:</span>
-                <span className="font-medium">{orderDetails.decorations.join(", ")}</span>
+                <span className="text-gray-600">Size:</span>
+                <span className="font-medium">
+                  {orderDetails.sixInchCakes > 0 && `${orderDetails.sixInchCakes}x 6-inch`}
+                  {orderDetails.sixInchCakes > 0 && orderDetails.eightInchCakes > 0 && " + "}
+                  {orderDetails.eightInchCakes > 0 && `${orderDetails.eightInchCakes}x 8-inch`}
+                </span>
               </div>
-            )}
-            {orderDetails.message && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Message:</span>
-                <span className="font-medium">"{orderDetails.message}"</span>
+                <span className="text-gray-600">Layers:</span>
+                <span className="font-medium">
+                  {orderDetails.layers} {orderDetails.layers === 1 ? 'layer' : 'layers'}
+                </span>
               </div>
-            )}
-            {orderDetails.dietaryRestrictions.length > 0 && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Dietary:</span>
-                <span className="font-medium">{orderDetails.dietaryRestrictions.join(", ")}</span>
+                <span className="text-gray-600">Shape:</span>
+                <span className="font-medium capitalize">{orderDetails.shape}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Flavors:</span>
+                <span className="font-medium">
+                  {orderDetails.flavors.length > 0 ? orderDetails.flavors.join(", ") : "Vanilla"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Icing:</span>
+                <span className="font-medium">
+                  {getIcingDisplayName(orderDetails.icingType)}
+                </span>
+              </div>
+              {orderDetails.decorations.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Decorations:</span>
+                  <span className="font-medium">{orderDetails.decorations.join(", ")}</span>
+                </div>
+              )}
+              {orderDetails.message && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Message:</span>
+                  <span className="font-medium">"{orderDetails.message}"</span>
+                </div>
+              )}
+              {orderDetails.dietaryRestrictions.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Dietary:</span>
+                  <span className="font-medium">{orderDetails.dietaryRestrictions.join(", ")}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Special Instructions */}
+        {orderDetails.specialInstructions && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Special Instructions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700">{orderDetails.specialInstructions}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Pricing */}
         <Card className="cake-gradient text-white">

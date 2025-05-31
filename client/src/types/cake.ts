@@ -75,7 +75,7 @@ export const FLAVOR_OPTIONS: FlavorOption[] = [
   },
   {
     id: "chocolate",
-    name: "Chocolate ⭐ Premium",
+    name: "Chocolate",
     image: "https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=60",
   },
   {

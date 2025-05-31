@@ -1,4 +1,4 @@
-import { users, cakeOrders, cakeTemplates, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate } from "@shared/schema";
+import { users, cakeOrders, cakeTemplates, orderItems, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -6,12 +6,15 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   getCakeOrder(id: number): Promise<CakeOrder | undefined>;
-  getAllCakeOrders(): Promise<CakeOrder[]>;
+  getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]>;
   createCakeOrder(order: InsertCakeOrder): Promise<CakeOrder>;
   updateCakeOrderStatus(id: number, status: string): Promise<CakeOrder | undefined>;
   
   deleteCakeOrder(id: number): Promise<boolean>;
   deleteAllCakeOrders(): Promise<number>;
+  
+  getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]>;
+  createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
   
   getCakeTemplates(): Promise<CakeTemplate[]>;
   getCakeTemplatesByCategory(category: string): Promise<CakeTemplate[]>;
@@ -112,7 +115,7 @@ export class MemStorage implements IStorage {
     return this.cakeOrders.get(id);
   }
 
-  async getAllCakeOrders(): Promise<CakeOrder[]> {
+  async getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]> {
     return Array.from(this.cakeOrders.values());
   }
 
@@ -181,6 +184,16 @@ export class MemStorage implements IStorage {
     return count;
   }
 
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    // In memory storage doesn't support order items yet
+    return [];
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    // In memory storage doesn't support order items yet
+    throw new Error('Order items not supported in memory storage');
+  }
+
   async getCakeTemplates(): Promise<CakeTemplate[]> {
     return Array.from(this.cakeTemplates.values());
   }
@@ -201,7 +214,7 @@ export class MemStorage implements IStorage {
 
 // Use database storage for persistence
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
@@ -227,8 +240,37 @@ export class DatabaseStorage implements IStorage {
     return order || undefined;
   }
 
-  async getAllCakeOrders(): Promise<CakeOrder[]> {
-    return await db.select().from(cakeOrders).orderBy(cakeOrders.id);
+  async getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]> {
+    console.log("📋 DatabaseStorage: getAllCakeOrders called");
+    try {
+      const orders = await db.select().from(cakeOrders).orderBy(desc(cakeOrders.id));
+      console.log(`📋 Found ${orders.length} orders`);
+      
+      // For orders with line items, fetch the associated order items
+      const ordersWithItems = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            if (order.hasLineItems) {
+              console.log(`📦 Fetching line items for order #${order.id}`);
+              const items = await this.getOrderItemsByOrderId(order.id);
+              console.log(`📦 Found ${items.length} items for order #${order.id}:`, items.map(i => i.itemName));
+              return { ...order, orderItems: items };
+            }
+            console.log(`📦 Order #${order.id} is single-item (no line items)`);
+            return order;
+          } catch (error) {
+            console.error(`❌ Error fetching items for order ${order.id}:`, error);
+            return order; // Return order without items if there's an error
+          }
+        })
+      );
+      
+      console.log(`📋 Returning ${ordersWithItems.length} orders with line items processed`);
+      return ordersWithItems;
+    } catch (error) {
+      console.error('❌ Error in getAllCakeOrders:', error);
+      throw error;
+    }
   }
 
   async createCakeOrder(insertOrder: InsertCakeOrder): Promise<CakeOrder> {
@@ -287,7 +329,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCakeOrder(id: number): Promise<boolean> {
     const result = await db.delete(cakeOrders).where(eq(cakeOrders.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async deleteAllCakeOrders(): Promise<number> {
@@ -315,6 +357,23 @@ export class DatabaseStorage implements IStorage {
       .values(insertTemplate)
       .returning();
     return template;
+  }
+
+  async getOrderItemsByOrderId(orderId: number): Promise<OrderItem[]> {
+    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    const orderItemData = {
+      ...insertOrderItem,
+      createdAt: new Date().toISOString(),
+    };
+    
+    const [orderItem] = await db
+      .insert(orderItems)
+      .values(orderItemData)
+      .returning();
+    return orderItem;
   }
 }
 

@@ -8,7 +8,7 @@ export default function CakePreview() {
   const { layers, shape, icingColor, decorations, message, template } = cakeConfig;
 
   // Check if we should show the Father's Day template image
-  const showFathersDayImage = template === "fathers-day" || template === "999" || template === 999;
+  const showFathersDayImage = template === "fathers-day" || template === "999" || template === String(999);
 
   // Generate cake description for custom builds
   const getCakeDescription = () => {
