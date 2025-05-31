@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { Package, Phone, Mail, MapPin, Clock, CheckCircle, LogOut, Trash2, AlertTriangle, User, RotateCcw } from "lucide-react";
+import { Package, Phone, Mail, MapPin, Clock, CheckCircle, LogOut, Trash2, AlertTriangle, User, RotateCcw, DollarSign } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -270,6 +270,13 @@ export default function AdminOrders() {
               disabled={isLoading}
             >
               {isLoading ? "Loading..." : "Refresh Orders"}
+            </Button>
+            <Button 
+              onClick={() => setLocation("/admin/pricing")}
+              variant="outline"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Manage Pricing
             </Button>
             <Button 
               onClick={handleLogout}

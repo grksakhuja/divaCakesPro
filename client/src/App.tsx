@@ -9,6 +9,7 @@ import CakeBuilder from "@/pages/cake-builder";
 import OrderConfirmation from "@/pages/order-confirmation";
 import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
+import AdminPricing from "@/pages/admin-pricing";
 import NotFound from "@/pages/not-found";
 import Gallery from "@/pages/gallery";
 import About from "@/pages/about";
@@ -67,6 +68,7 @@ function Router() {
       </Route>
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/pricing" component={AdminPricing} />
       <Route>
         <Layout>
           <NotFound />

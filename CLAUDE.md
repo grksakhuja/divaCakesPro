@@ -320,7 +320,121 @@ DEMO_MODE=true
 4. Add proper error handling and logging
 5. Test thoroughly before deployment
 
+## 🔐 Admin Authentication System
+
+### **Architecture Overview**
+The admin authentication uses a session-based system with tokens stored in localStorage:
+
+1. **Backend Authentication** (`/api/admin-auth/verify`)
+   - Validates credentials against environment variables
+   - Returns a session token on successful login
+   - Maintains active sessions in memory with 24-hour expiry
+
+2. **Frontend Hook** (`useAdminAuth`)
+   - **CRITICAL**: Must return `sessionToken` in the hook's return object
+   - Stores session data in localStorage as: `{ timestamp, token }`
+   - Validates session expiry on component mount
+
+### **Common Authentication Issues & Solutions**
+
+#### **Issue**: Admin pages show "Loading..." indefinitely
+**Cause**: `useAdminAuth` hook not returning `sessionToken` properly
+**Solution**: Ensure the hook returns all necessary fields:
+```typescript
+return {
+  isAuthenticated,
+  isLoading,
+  login,
+  logout,
+  loginLoading,
+  loginError,
+  sessionToken, // ← CRITICAL: Must be included!
+};
+```
+
+#### **Issue**: API calls fail with 401 despite being logged in
+**Cause**: Session token not being passed in request headers
+**Solution**: Always include both Authorization and X-Admin-Session headers:
+```typescript
+headers: {
+  'Authorization': `Bearer ${sessionToken}`,
+  'X-Admin-Session': sessionToken
+}
+```
+
+### **Session Token Management**
+- Tokens are stored as: `admin_auth_session` in localStorage
+- Format: `{ timestamp: number, token: string }`
+- Expiry: 24 hours from creation
+- The hook automatically cleans up expired sessions
+
+## 💰 Dynamic Pricing Management System
+
+### **Overview**
+As of 2025-05-31, the system now includes a complete pricing management interface that allows admins to update prices without rebuilding or restarting the server.
+
+### **How It Works**
+1. **No Build Required**: Backend reads `pricing-structure.json` fresh on each request
+2. **Immediate Updates**: Price changes take effect instantly
+3. **Automatic Backups**: Creates timestamped backups before each update
+4. **Cache Invalidation**: Frontend React Query caches are cleared after updates
+
+### **API Endpoints**
+- `GET /api/admin/pricing` - Fetch current pricing (admin only)
+- `PUT /api/admin/pricing` - Update pricing with validation (admin only)
+- `GET /api/admin/pricing/backups` - View backup history (admin only)
+
+### **Admin UI Features**
+- Comprehensive pricing management at `/admin/pricing`
+- Organized tabs: Custom Cakes, Specialty Items, Extras & Add-ons, Backup History
+- Real-time validation (no negative prices)
+- Change tracking with reset capability
+- Backup history viewer
+
+### **Implementation Notes**
+1. **Routing**: Uses Wouter's `useLocation` hook (NOT `useNavigate`)
+2. **Authentication**: Requires session token from `useAdminAuth` hook
+3. **Validation**: All prices must be non-negative numbers
+4. **Backups**: Stored in `dist/server/pricing-backup-{timestamp}.json`
+
+## 🛠️ Common Development Pitfalls
+
+### **Wouter vs React Router**
+This project uses **Wouter**, not React Router. Key differences:
+- Use `useLocation` instead of `useNavigate`
+- Navigation: `const [, setLocation] = useLocation();`
+- Navigate: `setLocation('/path')`
+- No `useNavigate` export available
+
+### **Build Process**
+When adding new pages or making significant changes:
+1. Always run `npm run build` before `npm start`
+2. The build process copies `pricing-structure.json` to dist/server/
+3. Changes to React components require rebuilding
+
+### **Environment Variables**
+- Admin credentials are set via environment variables
+- In production (Railway), set these in the dashboard
+- Default development credentials: admin/admin123 (unless overridden)
+
+## 📋 Testing Utilities
+
+### **Pricing Management Tests**
+- `test-pricing-management.js` - Comprehensive API tests
+- `test-pricing-e2e.js` - End-to-end browser tests (requires Puppeteer)
+- Tests cover: Authentication, pricing updates, validation, backups, cache invalidation
+
+### **Running Tests**
+```bash
+# API tests
+node test-pricing-management.js
+
+# E2E tests (install puppeteer first)
+npm install --save-dev puppeteer
+node test-pricing-e2e.js
+```
+
 ---
-*Last updated: 2025-05-30*
-*Version: 2.0 - Post database migration and order system fixes*
-*Railway deployment with PostgreSQL + comprehensive order handling*
+*Last updated: 2025-05-31*
+*Version: 3.0 - Added dynamic pricing management and admin authentication documentation*
+*Railway deployment with PostgreSQL + comprehensive order handling + pricing management*
