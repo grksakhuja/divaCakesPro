@@ -39,7 +39,7 @@ interface AddImageForm {
   category: string;
 }
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { value: 'general', label: 'General' },
   { value: 'wedding', label: 'Wedding' },
   { value: 'birthday', label: 'Birthday' },
@@ -62,6 +62,10 @@ export default function AdminGallery() {
     description: '',
     category: 'general'
   });
+  
+  // Category management
+  const [newCategory, setNewCategory] = useState('');
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
   // Fetch gallery images
   const { data: images = [], isLoading: imagesLoading, error } = useQuery({
@@ -81,6 +85,21 @@ export default function AdminGallery() {
       return response.json();
     },
     enabled: isAuthenticated && !!sessionToken
+  });
+
+  // Generate categories from existing images + defaults
+  const existingCategories = Array.from(new Set(images.map(img => img.category)));
+  const allCategoryValues = Array.from(new Set([
+    ...DEFAULT_CATEGORIES.map(cat => cat.value),
+    ...existingCategories
+  ]));
+  
+  const categories = allCategoryValues.map(value => {
+    const defaultCat = DEFAULT_CATEGORIES.find(cat => cat.value === value);
+    return defaultCat || { 
+      value, 
+      label: value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    };
   });
 
   // Add image mutation
@@ -221,6 +240,40 @@ export default function AdminGallery() {
     }
   };
 
+  const handleAddCategory = () => {
+    if (!newCategory.trim()) {
+      toast({ 
+        title: "Error", 
+        description: "Please enter a category name",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    const categoryValue = newCategory.toLowerCase().replace(/\s+/g, '-');
+    const categoryExists = categories.some(cat => cat.value === categoryValue);
+    
+    if (categoryExists) {
+      toast({ 
+        title: "Error", 
+        description: "This category already exists",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Set the new category in the form - it will be saved when the image is created
+    setAddForm(prev => ({ ...prev, category: categoryValue }));
+    setNewCategory('');
+    setShowAddCategory(false);
+    
+    toast({ 
+      title: "Success", 
+      description: `Category "${newCategory}" ready to use. It will be saved when you add an image.`,
+      variant: "default" 
+    });
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -328,13 +381,57 @@ export default function AdminGallery() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="category">Category</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowAddCategory(true)}
+                      className="text-xs gap-1"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add New
+                    </Button>
+                  </div>
+                  
+                  {showAddCategory && (
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        placeholder="New category name"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        onClick={handleAddCategory}
+                        className="px-3"
+                      >
+                        Add
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setShowAddCategory(false);
+                          setNewCategory('');
+                        }}
+                        className="px-3"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                  
                   <Select value={addForm.category} onValueChange={(value) => setAddForm(prev => ({ ...prev, category: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map(cat => (
+                      {categories.map(cat => (
                         <SelectItem key={cat.value} value={cat.value}>
                           {cat.label}
                         </SelectItem>

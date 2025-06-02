@@ -31,17 +31,11 @@ const CATEGORY_LABELS = {
 };
 
 export default function Gallery() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
-  // Fetch gallery images
+  // Just fetch all gallery images - no filtering to avoid re-render issues
   const { data: images = [], isLoading, error } = useQuery({
-    queryKey: ['gallery', selectedCategory],
+    queryKey: ['gallery'],
     queryFn: async () => {
-      const url = selectedCategory === 'all' 
-        ? '/api/gallery' 
-        : `/api/gallery?category=${selectedCategory}`;
-      
-      const response = await fetch(url);
+      const response = await fetch('/api/gallery');
       
       if (!response.ok) {
         throw new Error('Failed to fetch gallery images');
@@ -50,9 +44,6 @@ export default function Gallery() {
       return response.json();
     }
   });
-
-  // Get unique categories from images
-  const categories = Array.from(new Set(images.map((img: GalleryImage) => img.category)));
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -96,34 +87,12 @@ export default function Gallery() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Our Cake Gallery
+              Cake Gallery
             </h1>
             <p className="text-lg text-gray-600 mb-8">
-              Browse through our collection of beautiful custom cakes and get inspired for your next order!
+              Explore our curated Instagram gallery showcasing our most stunning custom cake creations. From elegant wedding cakes to playful birthday designs, let these masterpieces inspire your next sweet celebration!
             </p>
 
-            {/* Category Filter */}
-            {categories.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mb-8">
-                <Button
-                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory('all')}
-                >
-                  All
-                </Button>
-                {categories.map(category => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category}
-                  </Button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Loading State */}
@@ -168,51 +137,22 @@ export default function Gallery() {
             </Card>
           )}
 
-          {/* Gallery Grid */}
+          {/* Clean Instagram Gallery */}
           {!isLoading && !error && images.length > 0 && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mb-12">
                 {images.map((image: GalleryImage) => (
-                  <Card key={image.id} className="overflow-hidden bg-white/80 backdrop-blur hover:shadow-lg transition-shadow">
-                    <CardContent className="p-0">
-                      {/* Direct Instagram Embed - exactly like test HTML */}
-                      <div 
-                        style={{ minHeight: '400px' }}
-                        dangerouslySetInnerHTML={{ __html: image.embedHtml }}
-                      />
-                      
-                      {/* Image Details */}
-                      <div className="p-6">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {image.title}
-                          </h3>
-                          <Badge variant="secondary" className="ml-2">
-                            {CATEGORY_LABELS[image.category as keyof typeof CATEGORY_LABELS] || image.category}
-                          </Badge>
-                        </div>
-                        
-                        {image.description && (
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                            {image.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{formatDate(image.createdAt)}</span>
-                          <a 
-                            href={image.instagramUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
-                          >
-                            <Instagram className="h-3 w-3" />
-                            View Post
-                          </a>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div key={image.id} className="overflow-hidden">
+                    {/* Just the Instagram post - no frame */}
+                    <div 
+                      className="instagram-post-mobile"
+                      style={{
+                        transform: 'scale(0.9)',
+                        transformOrigin: 'top center'
+                      }}
+                      dangerouslySetInnerHTML={{ __html: image.embedHtml }} 
+                    />
+                  </div>
                 ))}
               </div>
 
