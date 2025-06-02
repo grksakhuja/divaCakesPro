@@ -8,26 +8,37 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Determine if we're connecting to a remote database
-const isRemoteDb = process.env.DATABASE_URL && (
-  process.env.DATABASE_URL.includes('railway.app') ||
-  process.env.DATABASE_URL.includes('amazonaws.com') ||
-  process.env.DATABASE_URL.includes('supabase.co') ||
-  !process.env.DATABASE_URL.includes('localhost')
-);
+// Parse DATABASE_URL to extract components
+const dbUrl = new URL(process.env.DATABASE_URL);
+const isRemoteDb = !dbUrl.hostname.includes('localhost');
 
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+// Railway-specific connection configuration
+const poolConfig = {
+  host: dbUrl.hostname,
+  port: parseInt(dbUrl.port || '5432'),
+  database: dbUrl.pathname.slice(1), // Remove leading slash
+  user: dbUrl.username,
+  password: dbUrl.password,
   ssl: isRemoteDb ? { 
-    rejectUnauthorized: false,
-    sslmode: 'require'
+    rejectUnauthorized: false
   } : false,
-  connectionTimeoutMillis: 30000, // Increased to 30 seconds for remote connections
+  connectionTimeoutMillis: 120000, // 2 minutes for Railway
   idleTimeoutMillis: 30000,
-  max: 10, // Maximum number of clients in the pool
+  max: 3, // Very small pool for Railway
+  application_name: 'CakeCraftPro',
   keepAlive: true,
   keepAliveInitialDelayMillis: 10000,
+};
+
+console.log('🔌 Connecting to database:', {
+  host: poolConfig.host,
+  port: poolConfig.port,
+  database: poolConfig.database,
+  user: poolConfig.user,
+  ssl: !!poolConfig.ssl
 });
+
+export const pool = new Pool(poolConfig);
 
 // Add connection error handling
 pool.on('error', (err) => {
