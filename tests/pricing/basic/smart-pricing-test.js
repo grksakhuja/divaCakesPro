@@ -1,4 +1,4 @@
-import { testPricingScenario, printTestResults, pricingStructure } from './pricing-test-utils.js';
+import { testPricingScenario, printTestResults, pricingStructure } from '../../core/pricing-test-utils.js';
 
 console.log('🧠 Smart Pricing Tests - Auto-calculated from pricing-structure.json');
 console.log('📋 Pricing structure loaded:', {

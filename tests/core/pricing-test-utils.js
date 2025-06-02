@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load pricing structure from the authoritative source
-const pricingStructurePath = path.join(__dirname, 'server', 'pricing-structure.json');
+const pricingStructurePath = path.join(__dirname, '..', '..', 'server', 'pricing-structure.json');
 export const pricingStructure = JSON.parse(fs.readFileSync(pricingStructurePath, 'utf-8'));
 
 // Server configuration

@@ -21,17 +21,17 @@ const DELAYS = {
 
 // Test files categorized by status
 const workingTests = [
-  'test-pricing.js',                    // Basic pricing tests (working)
-  'smart-pricing-test.js',              // Our revolutionary self-maintaining tests
-  'fixed-comprehensive-pricing-test.js', // Fixed version with correct expectations
-  'test-dynamic-specialty-items.js',    // Dynamic specialty items API and cart integration
+  '../pricing/basic/test-pricing.js',                    // Basic pricing tests (working)
+  '../pricing/basic/smart-pricing-test.js',              // Our revolutionary self-maintaining tests
+  '../pricing/basic/fixed-comprehensive-pricing-test.js', // Fixed version with correct expectations
+  '../features/admin/test-dynamic-specialty-items.js',    // Dynamic specialty items API and cart integration
 ];
 
 const brokenTests = [
-  'comprehensive-pricing-test.js',   // Has hardcoded wrong expectations
-  'stress-test-pricing.js',          // Has hardcoded wrong expectations  
-  'edge-case-pricing-tests.js',      // Has hardcoded wrong expectations
-  'extensive-pricing-test.js',       // Has hardcoded wrong expectations
+  '../pricing/comprehensive/comprehensive-pricing-test.js',   // Has hardcoded wrong expectations
+  '../pricing/comprehensive/stress-test-pricing.js',          // Has hardcoded wrong expectations  
+  '../pricing/comprehensive/edge-case-pricing-tests.js',      // Has hardcoded wrong expectations
+  '../pricing/comprehensive/extensive-pricing-test.js',       // Has hardcoded wrong expectations
 ];
 
 const testFiles = includeBroken ? [...workingTests, ...brokenTests] : workingTests;

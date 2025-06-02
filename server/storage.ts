@@ -242,9 +242,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCakeOrders(): Promise<(CakeOrder & { orderItems?: OrderItem[] })[]> {
     console.log("📋 DatabaseStorage: getAllCakeOrders called");
-    try {
-      const orders = await db.select().from(cakeOrders).orderBy(desc(cakeOrders.id));
-      console.log(`📋 Found ${orders.length} orders`);
+    
+    // Retry logic for connection issues
+    let retries = 3;
+    let lastError: any;
+    
+    while (retries > 0) {
+      try {
+        const orders = await db.select().from(cakeOrders).orderBy(desc(cakeOrders.id));
+        console.log(`📋 Found ${orders.length} orders`);
       
       // For orders with line items, fetch the associated order items
       const ordersWithItems = await Promise.all(
@@ -267,10 +273,28 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`📋 Returning ${ordersWithItems.length} orders with line items processed`);
       return ordersWithItems;
-    } catch (error) {
-      console.error('❌ Error in getAllCakeOrders:', error);
-      throw error;
+      
+      } catch (error: any) {
+        lastError = error;
+        retries--;
+        
+        if (error.message?.includes('Connection terminated') || error.code === 'ECONNRESET') {
+          console.warn(`⚠️ Connection issue in getAllCakeOrders, retries left: ${retries}`);
+          if (retries > 0) {
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, (3 - retries) * 1000));
+            continue;
+          }
+        }
+        
+        console.error('❌ Error in getAllCakeOrders:', error);
+        throw error;
+      }
     }
+    
+    // If we've exhausted all retries
+    console.error('❌ Failed to get orders after all retries:', lastError);
+    throw lastError;
   }
 
   async createCakeOrder(insertOrder: InsertCakeOrder): Promise<CakeOrder> {
