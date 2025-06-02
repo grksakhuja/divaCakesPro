@@ -1,5 +1,88 @@
 # 🎂 CakeCraftPro - Complete System Documentation
 
+## 📋 Task-Master Usage Guide
+
+### Common Task-Master Commands (using `tm` alias):
+
+**Viewing Tasks:**
+- `tm list` - List all tasks with their status
+- `tm show 11` - Show detailed info about task 11
+- `tm next` - Show the next task to work on
+
+**Managing Task Status:**
+- `tm set-status --id=11 --status=in-progress` - Start working on a task
+- `tm set-status --id=11.1 --status=done` - Mark subtask as complete
+- Status options: `pending`, `in-progress`, `done`, `blocked`, `deferred`, `cancelled`
+
+**Task Management:**
+- `tm add-task --prompt="Create user authentication system"` - Add new task
+- `tm update-task --id=11 --prompt="Add Instagram integration"` - Update task details
+- `tm remove-task --id=11 -y` - Remove a task
+
+**Subtask Management:**
+- `tm add-subtask --parent=11 --title="Setup Instagram API"` - Add subtask manually
+- `tm update-subtask --id=11.3 --prompt="Use Instagram oEmbed API"` - Update subtask
+- `tm clear-subtasks --id=11` - Remove all subtasks from a task
+
+**Dependencies:**
+- `tm add-dependency --id=11 --depends-on=5` - Add dependency
+- `tm remove-dependency --id=11 --depends-on=5` - Remove dependency
+
+### Task-Master File Structure:
+```
+.taskmaster/
+├── config.json           # AI model configuration
+├── tasks/
+│   ├── tasks.json       # Main task database
+│   ├── task_001.txt     # Individual task files
+│   └── ...
+└── prompt-to-generate-tasks.txt
+```
+
+### Important Notes:
+- Task files are auto-generated from tasks.json
+- Always use status commands to track progress
+- Dependencies must reference lower ID numbers only
+- Use Claude for task expansion to avoid API usage
+- **ALWAYS update dependencies when task approach changes** (e.g., `tm remove-dependency --id=11.3 --depends-on=11.2`)
+- Check dependencies with `tm show <task-id>` before marking tasks complete
+
+## 🤖 Claude Task Expansion Command
+
+**⚠️ IMPORTANT: Always use this Claude command instead of `tm expand` to avoid using API tokens**
+
+When asked to "expand task X" or "break down task X", I will analyze the task and generate subtasks following this structure:
+
+```json
+{
+  "subtasks": [
+    {
+      "id": 1,
+      "title": "Subtask title",
+      "description": "Clear description of what needs to be done",
+      "dependencies": [], // Array of subtask IDs this depends on
+      "details": "Implementation details including specific steps, code patterns, and technical considerations",
+      "status": "pending",
+      "testStrategy": "How to verify this subtask is complete and working correctly"
+    }
+  ]
+}
+```
+
+### Expansion Guidelines:
+1. Generate 3-7 subtasks based on complexity (default: 5)
+2. Each subtask should be atomic and independently completable
+3. Dependencies must only reference lower-numbered subtasks
+4. Order subtasks logically (setup → core → features → polish)
+5. Include concrete implementation details
+6. Define clear test/verification strategies
+7. Consider existing project patterns and conventions
+
+### Example Usage:
+- "Expand task 11" - Expands with default settings
+- "Expand task 11 with 7 subtasks" - Specific number
+- "Expand task 11 focusing on performance" - Additional context
+
 ## 🎯 Project Overview
 **CakeCraftPro-Railway** is a custom cake ordering platform with:
 - **Custom cake builder** with real-time pricing

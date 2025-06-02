@@ -25,6 +25,7 @@ const workingTests = [
   '../pricing/basic/smart-pricing-test.js',              // Our revolutionary self-maintaining tests
   '../pricing/basic/fixed-comprehensive-pricing-test.js', // Fixed version with correct expectations
   '../features/admin/test-dynamic-specialty-items.js',    // Dynamic specialty items API and cart integration
+  '../features/gallery/run-gallery-tests.js',            // Gallery system tests (Instagram integration)
 ];
 
 const brokenTests = [

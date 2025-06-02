@@ -76,6 +76,24 @@ export const cakeTemplates = pgTable("cake_templates", {
   basePrice: integer("base_price").notNull(), // in cents
 });
 
+export const galleryImages = pgTable("gallery_images", {
+  id: serial("id").primaryKey(),
+  instagramUrl: text("instagram_url").notNull().unique(),
+  embedHtml: text("embed_html"),
+  thumbnailUrl: text("thumbnail_url"),
+  caption: text("caption"),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull().default("general"), // general, wedding, birthday, specialty, custom
+  tags: json("tags").$type<string[]>().notNull().default([]),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  uploadedBy: text("uploaded_by").notNull(),
+  fetchedAt: text("fetched_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export const insertCakeOrderSchema = createInsertSchema(cakeOrders).omit({
   id: true,
   orderDate: true,
@@ -94,6 +112,12 @@ export const insertCakeTemplateSchema = createInsertSchema(cakeTemplates).omit({
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+});
+
+export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Schema for checkout API that accepts multiple items
@@ -147,3 +171,5 @@ export type CakeTemplate = typeof cakeTemplates.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type CheckoutOrder = z.infer<typeof checkoutOrderSchema>;
+export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
+export type GalleryImage = typeof galleryImages.$inferSelect;

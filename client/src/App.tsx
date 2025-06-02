@@ -10,6 +10,7 @@ import OrderConfirmation from "@/pages/order-confirmation";
 import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
 import AdminPricing from "@/pages/admin-pricing";
+import AdminGallery from "@/pages/admin-gallery";
 import NotFound from "@/pages/not-found";
 import Gallery from "@/pages/gallery";
 import About from "@/pages/about";
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/pricing" component={AdminPricing} />
+      <Route path="/admin/gallery" component={AdminGallery} />
       <Route>
         <Layout>
           <NotFound />

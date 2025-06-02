@@ -31,6 +31,7 @@ const CATEGORY_LABELS = {
 };
 
 export default function Gallery() {
+  console.log('🎯 Gallery component rendering');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Fetch gallery images
@@ -62,32 +63,120 @@ export default function Gallery() {
     });
   };
 
-  // Load Instagram embed script when images are loaded - simplified approach
+  // Load Instagram embed script and process embeds when images change
   useEffect(() => {
-    if (images.length === 0) return;
-
-    // Remove any existing Instagram script to force fresh load
-    const existingScript = document.querySelector('script[src*="instagram.com/embed.js"]');
-    if (existingScript) {
-      existingScript.remove();
+    console.log('Gallery useEffect running, images length:', images.length);
+    
+    if (images.length === 0) {
+      console.log('No images, skipping Instagram script loading');
+      return;
     }
 
-    // Create fresh Instagram script exactly like in test HTML
-    const script = document.createElement('script');
-    script.src = 'https://www.instagram.com/embed.js';
-    script.async = true;
+    console.log('Starting Instagram script loading process...');
     
-    // Add to document head
-    document.head.appendChild(script);
-
-    // Clean up on unmount
-    return () => {
-      const scriptToRemove = document.querySelector('script[src*="instagram.com/embed.js"]');
-      if (scriptToRemove) {
-        scriptToRemove.remove();
+    const processEmbeds = () => {
+      console.log('processEmbeds called, window.instgrm:', !!window.instgrm);
+      if (window.instgrm && window.instgrm.Embeds) {
+        console.log('✅ Processing Instagram embeds...');
+        window.instgrm.Embeds.process();
+        
+        // Check what happened after processing and hide fallbacks for working embeds
+        setTimeout(() => {
+          const embeds = document.querySelectorAll('.instagram-media');
+          console.log(`Found ${embeds.length} Instagram embeds after processing`);
+          
+          embeds.forEach((embed, index) => {
+            const hasImages = embed.querySelector('img');
+            const hasIframes = embed.querySelector('iframe');
+            const isProcessed = hasImages || hasIframes;
+            
+            console.log(`Embed ${index + 1}: has images=${!!hasImages}, has iframes=${!!hasIframes}, processed=${isProcessed}`);
+            
+            if (isProcessed) {
+              // Find the corresponding fallback and hide it
+              const container = embed.closest('.relative');
+              const fallback = container?.querySelector('.instagram-fallback');
+              if (fallback) {
+                (fallback as HTMLElement).style.display = 'none';
+                console.log(`Hiding fallback for embed ${index + 1}`);
+              }
+            } else {
+              console.log(`Embed ${index + 1} did not load properly, showing fallback`);
+            }
+          });
+        }, 3000);
+      } else {
+        console.log('❌ Instagram API not available');
       }
     };
+
+    const loadInstagramScript = () => {
+      console.log('loadInstagramScript called');
+      const existingScript = document.querySelector('script[src*="instagram.com/embed.js"]');
+      console.log('Existing Instagram script found:', !!existingScript);
+      
+      if (!existingScript) {
+        console.log('Creating new Instagram script...');
+        const script = document.createElement('script');
+        script.src = 'https://www.instagram.com/embed.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('✅ Instagram script loaded successfully');
+          setTimeout(processEmbeds, 500);
+        };
+        script.onerror = (error) => {
+          console.error('❌ Failed to load Instagram script:', error);
+        };
+        document.head.appendChild(script);
+        console.log('Instagram script added to head');
+      } else {
+        console.log('Script already exists, checking if Instagram API is available...');
+        if (window.instgrm) {
+          console.log('Instagram API available, processing immediately');
+          setTimeout(processEmbeds, 100);
+        } else {
+          console.log('Instagram API not available yet, waiting...');
+          setTimeout(() => {
+            console.log('Retry: checking Instagram API availability...');
+            if (window.instgrm) {
+              console.log('Instagram API now available');
+              processEmbeds();
+            } else {
+              console.log('Instagram API still not available');
+            }
+          }, 1000);
+        }
+      }
+    };
+
+    loadInstagramScript();
+    
+    // Also try processing after DOM updates
+    const timeoutId = setTimeout(() => {
+      console.log('Timeout processing attempt...');
+      if (window.instgrm) {
+        processEmbeds();
+      } else {
+        console.log('Instagram API still not available after timeout');
+      }
+    }, 3000);
+
+    return () => {
+      console.log('Cleaning up Instagram effect');
+      clearTimeout(timeoutId);
+    };
   }, [images]);
+
+  // Declare instgrm for TypeScript
+  declare global {
+    interface Window {
+      instgrm?: {
+        Embeds: {
+          process: () => void;
+        };
+      };
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -175,11 +264,44 @@ export default function Gallery() {
                 {images.map((image: GalleryImage) => (
                   <Card key={image.id} className="overflow-hidden bg-white/80 backdrop-blur hover:shadow-lg transition-shadow">
                     <CardContent className="p-0">
-                      {/* Direct Instagram Embed - exactly like test HTML */}
-                      <div 
-                        style={{ minHeight: '400px' }}
-                        dangerouslySetInnerHTML={{ __html: image.embedHtml }}
-                      />
+                      {/* Instagram Embed with Fallback */}
+                      <div className="relative" style={{ minHeight: '400px' }}>
+                        {/* Try Instagram Embed First */}
+                        <div 
+                          className="instagram-embed-container"
+                          dangerouslySetInnerHTML={{ __html: image.embedHtml }}
+                        />
+                        
+                        {/* Fallback Card Overlay (will be hidden if embed works) */}
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 instagram-fallback"
+                          style={{ zIndex: 1 }}
+                        >
+                          <div className="text-center p-6 bg-white rounded-xl shadow-lg max-w-sm mx-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <Instagram className="h-8 w-8 text-white" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                              {image.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Beautiful cake creation from Instagram
+                            </p>
+                            <a 
+                              href={image.instagramUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all"
+                            >
+                              <Instagram className="h-4 w-4" />
+                              View on Instagram
+                            </a>
+                            <p className="text-xs text-gray-500 mt-3">
+                              Tap to see the full post with images
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                       
                       {/* Image Details */}
                       <div className="p-6">
