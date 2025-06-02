@@ -1,0 +1,443 @@
+# CakeCraftPro - Product Requirements Document
+
+<PRD>
+# Technical Architecture  
+
+## System Components
+1. **Frontend Application**
+   - React 18 + TypeScript + Vite
+   - Wouter routing for navigation
+   - Zustand for cart state management
+   - TanStack Query for server state
+   - Tailwind CSS + shadcn/ui for styling
+   - Cake builder and admin UI components
+
+2. **Backend Server**
+   - Express.js with TypeScript
+   - Drizzle ORM for database access
+   - PostgreSQL (hosted on Railway)
+   - API endpoints for order, pricing, authentication, and admin
+   - Session management with express-session
+   - Email integration with Brevo SMTP
+
+3. **Database**
+   - PostgreSQL schema for cake_orders, order_items, users
+   - Migrations managed by Drizzle ORM
+   - Environment-based connection configuration
+
+4. **Email System**
+   - Brevo SMTP for transactional emails
+   - Nodemailer for sending HTML templates
+   - Order confirmation and admin notification templates
+
+5. **State Management & Utilities**
+   - Zustand for persistent cart state
+   - TanStack Query for server state
+   - Price formatting utilities for MYR
+
+## Data Models
+
+### cake_orders
+```json
+{
+  "id": "uuid",
+  "customerName": "string",
+  "customerEmail": "string",
+  "customerPhone": "string",
+  "layers": "number",
+  "shape": "string",
+  "flavors": "string[]",
+  "icingColor": "string",
+  "icingType": "string",
+  "decorations": "string[]",
+  "message": "string",
+  "dietaryRestrictions": "string[]",
+  "servings": "number",
+  "sixInchCakes": "number",
+  "eightInchCakes": "number",
+  "deliveryMethod": "string",
+  "specialInstructions": "string",
+  "totalPrice": "number",
+  "status": "string",
+  "orderDate": "date",
+  "hasLineItems": "boolean"
+}
+```
+
+### order_items
+```json
+{
+  "id": "uuid",
+  "orderId": "uuid",
+  "itemType": "string",
+  "itemName": "string",
+  "quantity": "number",
+  "unitPrice": "number",
+  "totalPrice": "number",
+  "itemConfig": "object",
+  "createdAt": "date"
+}
+```
+
+### users
+```json
+{
+  "id": "uuid",
+  "username": "string",
+  "password": "string (hashed)"
+}
+```
+
+## APIs and Integrations
+1. **Express API**
+   - `/api/calculate-price` (POST): Accepts cake config, returns price breakdown
+   - `/api/checkout` (POST): Creates order(s) in DB, sends emails
+   - `/api/cakes` (GET): Returns specialty items from pricing config
+   - `/api/admin/login` (POST): Authenticates admin
+   - `/api/admin/orders` (GET/POST): Order management endpoints
+
+2. **Brevo SMTP**
+   - Email delivery for order confirmations and admin notifications
+   - HTML templates for customer/admin
+
+3. **Railway PostgreSQL**
+   - Managed DB hosting
+   - Secure connection via env vars
+
+## Infrastructure Requirements
+1. **Node.js Runtime**
+   - Version 18+
+   - ES Module support
+   - .env for secrets
+
+2. **Frontend Tooling**
+   - Vite for dev/build
+   - Tailwind CSS for styling
+
+3. **Deployment**
+   - Railway for backend/database
+   - Environment variable management
+
+# Development Roadmap  
+
+## Phase 1: MVP Foundation
+1. **Database Schema Setup**
+   - Implement cake_orders, order_items, users tables
+   - Configure Drizzle ORM and migrations
+2. **Express Server Foundation**
+   - Set up Express with TypeScript, CORS, JSON, session, dotenv
+   - Basic API structure and health check
+3. **React Application Setup**
+   - Vite + React + TypeScript
+   - Tailwind, shadcn/ui, Zustand, TanStack Query, Wouter
+   - Basic layout and navigation
+4. **Admin Authentication System**
+   - Admin login API, session tokens, protected routes
+   - React admin login page with validation
+5. **Basic Pricing Engine**
+   - pricing-structure.json for base prices
+   - /api/calculate-price endpoint
+   - Price calculation logic and formatting
+6. **Basic Cake Builder**
+   - 4-step builder: size, layers, flavors, decorations
+   - Step navigation, validation, real-time pricing
+7. **Single Order Creation Flow**
+   - Customer info form, /api/checkout, order confirmation
+   - Email notifications to customer/admin
+8. **Email Notification System**
+   - Brevo SMTP config, nodemailer, HTML templates
+   - Error handling and retry logic
+9. **Basic Admin Order Dashboard**
+   - Admin order listing/detail, status update, filtering
+
+## Phase 2: Enhanced Shopping Experience
+10. **Advanced Cake Builder**
+    - 8-step builder: icing color, dietary, message, servings, preview
+    - Advanced validation, visual preview
+11. **Shopping Cart Implementation**
+    - Zustand cart store, cart actions, sidebar, persistence
+12. **Specialty Items Catalog**
+    - /api/cakes endpoint, specialty items page, add-to-cart
+13. **Multi-item Checkout System**
+    - /api/checkout for multi-item, order_items integration, email updates
+14. **Advanced Pricing Management**
+    - Admin pricing page, real-time updates, backup/history
+15. **Enhanced Admin Order Management**
+    - Multi-item order display, bulk ops, search/filter/export
+
+## Phase 3: Business Growth Features
+16. **Gallery Management System**
+    - Image upload, admin gallery, public gallery, product linking
+17. **Customer Reviews System**
+    - Reviews table, post-order email, moderation, public display
+18. **FAQ Management System**
+    - FAQ table, admin CRUD, public FAQ/search
+19. **Order Status Notifications**
+    - Email/SMS, status workflow, customer portal, reminders
+20. **Delivery Zone Management**
+    - delivery_zones table, admin config, postcode checker, fee calc
+
+## Phase 4: Advanced Features
+21. **Customer Favorites System**
+    - Wishlist, quick reorder, sharing, reminders, recommendations
+22. **Bulk Order Management**
+    - bulk_orders/corporate_accounts, discount tiers, event planning
+23. **Inventory Management System**
+    - ingredients/stock/suppliers, production planning, alerts
+24. **Analytics Dashboard**
+    - Data collection, reporting, admin dashboard, A/B testing
+25. **Customer Communication Hub**
+    - Messaging, design consultation, photo sharing, approval workflow
+
+## Risk Mitigation Tasks
+26. **Database Connection Resilience**
+    - Retry logic, health checks, pooling, monitoring
+27. **Email Delivery Reliability**
+    - Email queue, retry/backoff, status tracking, manual resend
+28. **Performance Optimization**
+    - Caching, query optimization, image optimization, monitoring
+
+## Testing and Deployment
+29. **Comprehensive Testing Suite**
+    - Jest, React Testing Library, supertest, e2e, integration, mocks
+30. **Production Deployment Setup**
+    - Railway config, env vars, build, migrations, health checks, logging, backup
+
+# Logical Dependency Chain
+
+## Foundation Layer
+1. **Database Schema Setup**
+2. **Express Server Foundation** (depends on 1)
+3. **React Application Setup**
+4. **Admin Authentication System** (depends on 2)
+5. **Basic Pricing Engine** (depends on 2)
+6. **Basic Cake Builder** (depends on 3, 5)
+7. **Single Order Creation Flow** (depends on 4, 6)
+8. **Email Notification System** (depends on 7)
+9. **Basic Admin Order Dashboard** (depends on 4, 7)
+
+## Functional Layer
+10. **Advanced Cake Builder** (depends on 6)
+11. **Shopping Cart Implementation** (depends on 3, 10)
+12. **Specialty Items Catalog** (depends on 5, 11)
+13. **Multi-item Checkout System** (depends on 7, 11, 12)
+14. **Advanced Pricing Management** (depends on 4, 5)
+15. **Enhanced Admin Order Management** (depends on 9, 13)
+
+## Enhancement Layer
+16. **Gallery Management System** (depends on 1, 4)
+17. **Customer Reviews System** (depends on 8, 4)
+18. **FAQ Management System** (depends on 4)
+19. **Order Status Notifications** (depends on 8, 15)
+20. **Delivery Zone Management** (depends on 4, 13)
+
+## Advanced Layer
+21. **Customer Favorites System** (depends on 11, 13)
+22. **Bulk Order Management** (depends on 13, 14)
+23. **Inventory Management System** (depends on 15, 4)
+24. **Analytics Dashboard** (depends on 15, 4)
+25. **Customer Communication Hub** (depends on 15, 8)
+
+## Risk Mitigation & Testing
+26. **Database Connection Resilience** (depends on 1)
+27. **Email Delivery Reliability** (depends on 8)
+28. **Performance Optimization** (depends on 5, 12)
+29. **Comprehensive Testing Suite** (depends on all core tasks)
+30. **Production Deployment Setup** (depends on 29)
+
+# Risks and Mitigations  
+
+## Technical Challenges
+
+### API Reliability
+**Risk**: Email or DB APIs could have downtime or breaking changes.
+**Mitigation**: 
+- Implement robust error handling with exponential backoff
+- Add fallback mechanisms for email
+- Monitor DB and email health
+- Support manual retry for failed ops
+
+### Model Output Variability
+**Risk**: Pricing or order logic may produce inconsistent results.
+**Mitigation**:
+- Strict validation and schema enforcement
+- Automated tests for pricing and order flows
+- Manual override/admin controls
+
+### Node.js Version Compatibility
+**Risk**: Node version differences could cause issues.
+**Mitigation**:
+- Document minimum Node version
+- Use transpilers if needed
+- Test across Node versions
+
+## MVP Definition
+
+### Feature Prioritization
+**Risk**: Too many features in MVP could delay launch.
+**Mitigation**:
+- Focus MVP on core order flow, admin, pricing, and builder
+- Defer advanced features to later phases
+
+### Scope Creep
+**Risk**: Project could expand beyond intent.
+**Mitigation**:
+- Maintain strict MVP definition
+- Evaluate new features against core value
+
+### User Expectations
+**Risk**: Users may expect more than a custom cake ordering system.
+**Mitigation**:
+- Clearly communicate platform scope
+- Focus on cake ordering and bakery management
+
+## Resource Constraints
+
+### Development Capacity
+**Risk**: Limited resources could delay implementation.
+**Mitigation**:
+- Phase implementation
+- Focus on core first
+- Use open source libraries
+
+### Email/DB Cost Management
+**Risk**: Excessive usage could increase costs.
+**Mitigation**:
+- Monitor usage
+- Optimize queries and email volume
+- Use free/low-cost tiers where possible
+
+### Documentation Overhead
+**Risk**: System complexity requires extensive docs.
+**Mitigation**:
+- Use templates for docs
+- Build help into admin UI
+
+# Appendix  
+
+## Prompt Engineering Specifications
+
+### PRD Parsing Prompt Structure
+```
+You are assisting with transforming a Product Requirements Document (PRD) into a structured set of development tasks.
+
+Given the following PRD, create a comprehensive list of development tasks that would be needed to implement the described product.
+
+For each task:
+1. Assign a short, descriptive title
+2. Write a concise description
+3. Identify dependencies (which tasks must be completed before this one)
+4. Assign a priority (high, medium, low)
+5. Include detailed implementation notes
+6. Describe a test strategy to verify completion
+
+Structure the tasks in a logical order of implementation.
+
+PRD:
+{prd_content}
+```
+
+### Task Expansion Prompt Structure
+```
+You are helping to break down a development task into more manageable subtasks.
+
+Main task:
+Title: {task_title}
+Description: {task_description}
+Details: {task_details}
+
+Please create {num_subtasks} specific subtasks that together would accomplish this main task.
+
+For each subtask, provide:
+1. A clear, actionable title
+2. A concise description
+3. Any dependencies on other subtasks
+4. Specific acceptance criteria to verify completion
+
+Additional context:
+{additional_context}
+```
+
+### Research-Backed Expansion Prompt Structure
+```
+You are a technical researcher and developer helping to break down a software development task into detailed, well-researched subtasks.
+
+Main task:
+Title: {task_title}
+Description: {task_description}
+Details: {task_details}
+
+Research the latest best practices, technologies, and implementation patterns for this type of task. Then create {num_subtasks} specific, actionable subtasks that together would accomplish the main task.
+
+For each subtask:
+1. Provide a clear, specific title
+2. Write a detailed description including technical approach
+3. Identify dependencies on other subtasks
+4. Include specific acceptance criteria
+5. Reference any relevant libraries, tools, or resources that should be used
+
+Consider security, performance, maintainability, and user experience in your recommendations.
+```
+
+## Task File System Specification
+
+### Directory Structure
+```
+/
+├── .cursor/
+│   └── rules/
+│       ├── dev_workflow.mdc
+│       ├── cursor_rules.mdc
+│       └── self_improve.mdc
+├── scripts/
+│   ├── dev.js
+│   └── README.md
+├── tasks/
+│   ├── task_001.txt
+│   ├── task_002.txt
+│   └── ...
+├── .env
+├── .env.example
+├── .gitignore
+├── package.json
+├── README.md
+└── tasks.json
+```
+
+### Task ID Specification
+- Main tasks: Sequential integers (1, 2, 3, ...)
+- Subtasks: Parent ID + dot + sequential integer (1.1, 1.2, 2.1, ...)
+- ID references: Used in dependencies, command parameters
+- ID ordering: Implies suggested implementation order
+
+## Command-Line Interface Specification
+
+### Global Options
+- `--help`: Display help information
+- `--version`: Display version information
+- `--file=<file>`: Specify an alternative tasks.json file
+- `--quiet`: Reduce output verbosity
+- `--debug`: Increase output verbosity
+- `--json`: Output in JSON format (for programmatic use)
+
+### Command Structure
+- `node scripts/dev.js <command> [options]`
+- All commands operate on tasks.json by default
+- Commands follow consistent parameter naming
+- Common parameter styles: `--id=<id>`, `--status=<status>`, `--prompt="<text>"`
+- Boolean flags: `--all`, `--force`, `--with-subtasks`
+
+## API Integration Specifications
+
+### Email API Configuration
+- Authentication: BREVO_SMTP_USER, BREVO_SMTP_PASS env vars
+- Model selection: N/A
+- Default sender: FROM_EMAIL env var
+- Admin notifications: ADMIN_EMAIL env var
+
+### Database API Configuration
+- Authentication: DATABASE_URL env var
+- ORM: Drizzle ORM
+- Migrations: Drizzle migration scripts
+
+</PRD>

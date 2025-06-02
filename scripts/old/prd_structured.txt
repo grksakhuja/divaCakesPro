@@ -1,0 +1,266 @@
+# CakeCraftPro - Product Requirements Document
+
+<PRD>
+# Technical Architecture  
+
+## System Components
+1. **Order & Product Management Core**
+   - PostgreSQL schema (cake_orders, order_items, users, etc.)
+   - Order, item, and user models with dependencies, priorities, and metadata
+   - State management for orders and products
+   - Task and order file generation subsystem
+
+2. **Pricing & Checkout Engine**
+   - Dynamic pricing calculation (JSON config, API endpoint)
+   - Cart and checkout logic (single/multi-item, validation)
+   - Email notification system (Brevo SMTP, templates)
+
+3. **Frontend Application**
+   - React (Vite, TypeScript), Tailwind CSS, shadcn/ui
+   - Cake builder (4-step/8-step), cart, checkout, admin dashboard
+   - State management (Zustand), server state (TanStack Query), routing (Wouter)
+
+4. **Admin & Analytics Tools**
+   - Admin dashboard for order, pricing, and gallery management
+   - Analytics dashboard for sales, customer behavior, reporting
+   - Gallery and review management
+
+5. **Infrastructure & Integrations**
+   - Railway deployment, environment variable management
+   - Automated migrations, health checks, monitoring, backup/rollback
+   - Email (Brevo SMTP), planned SMS
+
+## Data Models
+
+### Order Model (example)
+```json
+{
+  "id": 1,
+  "customerName": "...",
+  "customerEmail": "...",
+  "items": [
+    { "id": 1, "itemType": "cake", "config": { /* ... */ } }
+  ],
+  "status": "pending|confirmed|completed",
+  "totalPrice": 0,
+  "orderDate": "ISO-8601 timestamp",
+  "dependencies": [],
+  "priority": "high|medium|low",
+  "details": "Order details and configuration",
+  "testStrategy": "Order creation, email notification, DB validation"
+}
+```
+
+### Tasks Collection Model (for project management)
+```json
+{
+  "meta": {
+    "projectName": "CakeCraftPro",
+    "version": "1.0.0",
+    "prdSource": "scripts/prd.txt",
+    "createdAt": "ISO-8601 timestamp",
+    "updatedAt": "ISO-8601 timestamp"
+  },
+  "tasks": [
+    // Array of Task objects (see below)
+  ]
+}
+```
+
+### Task File Format
+```
+# Task ID: <id>
+# Title: <title>
+# Status: <status>
+# Dependencies: <comma-separated list of dependency IDs>
+# Priority: <priority>
+# Description: <brief description>
+# Details:
+<detailed implementation notes>
+
+# Test Strategy:
+<verification approach>
+
+# Subtasks:
+1. <subtask title> - <subtask description>
+```
+
+## APIs and Integrations
+1. **Brevo SMTP (Nodemailer)**
+   - Auth via environment variables
+   - HTML email templates for order/customer/admin
+   - Error handling and retry logic
+2. **RESTful API**
+   - Endpoints for orders, pricing, checkout, specialty items, gallery, reviews, admin actions
+3. **File System API**
+   - Reading/writing order and task files
+   - Managing configuration and logs
+
+## Infrastructure Requirements
+1. **Node.js Runtime**
+   - Version 14.0.0 or higher
+   - ES Module support
+   - File system access rights
+2. **Configuration Management**
+   - Environment variable handling (.env, Railway)
+   - Configuration validation
+3. **Development Environment**
+   - Git repository, NPM, Vite, Railway, Cursor/editor integration
+
+# Development Roadmap  
+
+## Phase 1: Core System
+1. **Database & Models**
+   - Design and implement PostgreSQL schema (orders, items, users)
+   - Create model validation and migration scripts
+2. **Backend API**
+   - Express server setup with TypeScript
+   - Core middleware (CORS, JSON, session, dotenv)
+   - Basic API structure and health checks
+3. **Frontend Foundation**
+   - Vite React app with Tailwind, shadcn/ui
+   - Routing, layout, and state management
+4. **Order & Pricing Engine**
+   - Implement dynamic pricing logic and endpoint
+   - Cart and checkout flows
+   - Email notification system
+
+## Phase 2: Admin & Advanced Features
+1. **Admin Dashboard**
+   - Order management, pricing updates, gallery management
+   - Analytics dashboard
+2. **Gallery & Reviews**
+   - Public gallery, admin upload, review system
+3. **Specialty Items & Multi-Item Cart**
+   - Catalog, cart, and checkout for specialty items
+4. **Testing & Deployment**
+   - Automated tests, Railway deployment, monitoring
+
+## Phase 3: Enhancements
+1. **8-Step Cake Builder & Visual Preview**
+2. **Automated Notifications (SMS, status updates)**
+3. **Delivery Zone Configuration & Dynamic Fees**
+4. **Wishlist, Bulk Orders, Inventory, Messaging**
+5. **Business Intelligence & Reporting**
+6. **Performance Optimization & Robustness**
+
+# Logical Dependency Chain
+
+## Foundation Layer
+1. **Database & Models**
+   - All other features depend on this
+2. **Backend API**
+   - Built on top of models
+3. **Frontend Foundation**
+   - Depends on backend and models
+
+## Functional Layer
+4. **Order & Pricing Engine**
+   - Depends on backend, models, frontend
+5. **Admin Dashboard**
+   - Depends on backend, models, frontend
+6. **Gallery & Reviews**
+   - Depends on backend, models, frontend
+
+## Enhancement Layer
+7. **Specialty Items, Multi-Item Cart, Testing, Deployment**
+   - Built after core flows
+8. **Advanced Features (Notifications, Delivery, Wishlist, etc.)**
+   - Built after core and admin tools
+
+# Risks and Mitigations  
+
+## Technical Challenges
+- **Complex Pricing Logic**: Use modular, testable pricing engine and clear JSON config.
+- **Multi-Item Order Handling**: Design flexible schema and endpoints from the start.
+- **Real-Time Updates & Scaling**: Use caching, connection pooling, and monitoring.
+
+## MVP Definition
+- **Feature Prioritization**: Focus on core order flow, admin, and pricing for MVP. Defer advanced features.
+- **Scope Creep**: Maintain strict MVP definition, use feature flags, get early feedback.
+- **User Expectations**: Clearly communicate scope, provide integration points, document use cases.
+
+## Resource Constraints
+- **Development Capacity**: Phase implementation, focus on core, leverage open source, design for extensibility.
+- **Cost Management**: Track API usage, optimize prompts, cache responses, support local options.
+- **Documentation Overhead**: Use AI to help generate docs, build help into UI/CLI.
+
+# Appendix  
+
+## Prompt Engineering Specifications
+
+### PRD Parsing Prompt Structure
+```
+You are assisting with transforming a Product Requirements Document (PRD) into a structured set of development tasks.
+
+Given the following PRD, create a comprehensive list of development tasks that would be needed to implement the described product.
+
+For each task:
+1. Assign a short, descriptive title
+2. Write a concise description
+3. Identify dependencies (which tasks must be completed before this one)
+4. Assign a priority (high, medium, low)
+5. Include detailed implementation notes
+6. Describe a test strategy to verify completion
+
+Structure the tasks in a logical order of implementation.
+
+PRD:
+{prd_content}
+```
+
+### Task Expansion Prompt Structure
+```
+You are helping to break down a development task into more manageable subtasks.
+
+Main task:
+Title: {task_title}
+Description: {task_description}
+Details: {task_details}
+
+Please create {num_subtasks} specific subtasks that together would accomplish this main task.
+
+For each subtask, provide:
+1. A clear, actionable title
+2. A concise description
+3. Any dependencies on other subtasks
+4. Specific acceptance criteria to verify completion
+
+Additional context:
+{additional_context}
+```
+
+### Task File System Specification
+
+#### Directory Structure
+```
+/
+├── .cursor/
+│   └── rules/
+├── scripts/
+├── tasks/
+├── .env
+├── .gitignore
+├── package.json
+├── README.md
+└── tasks.json
+```
+
+#### Task ID Specification
+- Main tasks: Sequential integers (1, 2, 3, ...)
+- Subtasks: Parent ID + dot + sequential integer (1.1, 1.2, 2.1, ...)
+- ID references: Used in dependencies, command parameters
+- ID ordering: Implies suggested implementation order
+
+## API Integration Specifications
+
+### Brevo SMTP Configuration
+- Auth: BREVO_SMTP_USER, BREVO_SMTP_PASS, FROM_EMAIL, ADMIN_EMAIL
+- Templates: HTML for customer/admin
+- Error handling, retries
+
+### RESTful API Configuration
+- Endpoints: /api/orders, /api/calculate-price, /api/checkout, etc.
+- Auth: Session, environment variables
+- Error handling, validation
+</PRD>

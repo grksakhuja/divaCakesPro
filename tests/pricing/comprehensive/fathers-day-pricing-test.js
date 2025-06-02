@@ -6,7 +6,7 @@
  * Uses dynamic calculation from pricing-structure.json like other tests
  */
 
-import { testPricingScenario, printTestResults, pricingStructure } from './pricing-test-utils.js';
+import { testPricingScenario, printTestResults, pricingStructure } from '../../core/pricing-test-utils.js';
 
 console.log('🎂 Father\'s Day Pricing Tests - Auto-calculated from pricing-structure.json');
 console.log('📋 Pricing structure loaded:');

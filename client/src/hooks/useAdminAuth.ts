@@ -9,6 +9,7 @@ export function useAdminAuth() {
   const [isLoading, setIsLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<Error | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   // Check if we have a valid session
   useEffect(() => {
@@ -19,13 +20,21 @@ export function useAdminAuth() {
           const { timestamp, token } = JSON.parse(sessionData);
           const isValid = Date.now() - timestamp < SESSION_DURATION && token;
           setIsAuthenticated(isValid);
-          if (!isValid) {
+          if (isValid) {
+            setSessionToken(token);
+          } else {
             localStorage.removeItem(SESSION_KEY);
+            setSessionToken(null);
           }
         } catch {
           localStorage.removeItem(SESSION_KEY);
           setIsAuthenticated(false);
+          setSessionToken(null);
         }
+      } else {
+        // No session data found
+        setIsAuthenticated(false);
+        setSessionToken(null);
       }
       setIsLoading(false);
     };
@@ -57,6 +66,7 @@ export function useAdminAuth() {
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
           setIsAuthenticated(true);
+          setSessionToken(sessionData.token);
         } else {
           throw new Error(result.message || "Invalid credentials");
         }
@@ -74,6 +84,7 @@ export function useAdminAuth() {
   const logout = () => {
     localStorage.removeItem(SESSION_KEY);
     setIsAuthenticated(false);
+    setSessionToken(null);
   };
 
   return {
@@ -83,5 +94,6 @@ export function useAdminAuth() {
     logout,
     loginLoading,
     loginError,
+    sessionToken,
   };
 }

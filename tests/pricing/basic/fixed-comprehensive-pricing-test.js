@@ -1,4 +1,4 @@
-import { testPricingScenario, printTestResults, pricingStructure } from './pricing-test-utils.js';
+import { testPricingScenario, printTestResults, pricingStructure } from '../../core/pricing-test-utils.js';
 
 console.log('🔧 Fixed Comprehensive Pricing Test - Auto-calculated from pricing-structure.json');
 console.log('📋 This version uses the authoritative pricing structure instead of hardcoded expectations\n');

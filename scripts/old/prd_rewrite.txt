@@ -1,0 +1,101 @@
+<context>
+## Overview
+CakeCraftPro is a full-stack web application for a custom cake ordering business. It streamlines the process of designing, pricing, and ordering custom cakes and specialty items, while providing robust admin tools for order management, pricing, and analytics. The platform targets both end customers (for ordering) and business admins (for management), aiming to deliver a seamless, modern, and scalable experience.
+
+## Core Features
+- **Custom Cake Builder:** Interactive, step-based interface for customers to design cakes with real-time pricing.
+- **Dynamic Pricing Engine:** Calculates prices based on cake configuration, specialty items, and delivery zones.
+- **Shopping Cart & Checkout:** Supports single and multi-item orders, with persistent cart and secure checkout.
+- **Admin Dashboard:** Order management, pricing updates, analytics, and gallery management.
+- **Automated Notifications:** Email (and SMS) notifications for order status, confirmations, and reviews.
+- **Gallery & Reviews:** Public gallery for cake portfolio and customer review system.
+- **Inventory & Production:** Tools for tracking ingredients, managing suppliers, and planning production.
+- **Business Intelligence:** Analytics dashboard for sales, customer behavior, and reporting.
+
+## User Experience
+- **Personas:**  
+  - Customers: Individuals or businesses ordering cakes/specialty items.
+  - Admins: Bakery staff managing orders, pricing, and content.
+- **Key Flows:**  
+  - Customer: Browse → Build Cake → Add to Cart → Checkout → Receive Confirmation/Notifications.
+  - Admin: Login → View/Manage Orders → Update Pricing/Inventory → Review Analytics.
+- **UI/UX Considerations:**  
+  - Mobile-first, accessible design.
+  - Step-by-step cake builder with visual feedback.
+  - Persistent cart and session management.
+  - Admin tools with clear navigation and data visualization.
+
+</context>
+
+<PRD>
+## Technical Architecture
+- **Frontend:**  
+  - React (Vite, TypeScript), Tailwind CSS, shadcn/ui, Zustand (state), TanStack Query (server state), Wouter (routing).
+- **Backend:**  
+  - Express (TypeScript), Drizzle ORM, Railway PostgreSQL, Nodemailer (Brevo SMTP), dotenv, express-session.
+- **Database:**  
+  - Tables: cake_orders, order_items, users, gallery_images, reviews, faqs, notifications, delivery_zones, customer_favorites, bulk_orders, corporate_accounts, inventory, analytics, messages.
+- **APIs & Integrations:**  
+  - RESTful API endpoints for orders, pricing, checkout, specialty items, gallery, reviews, admin actions.
+  - Email via Brevo SMTP; SMS planned for notifications.
+- **Infrastructure:**  
+  - Railway for deployment, environment variable management, automated migrations, health checks, monitoring, backup/rollback.
+
+## Development Roadmap
+### MVP Requirements
+- PostgreSQL schema with Drizzle ORM (orders, items, users)
+- Express server with core middleware and API structure
+- React frontend with 4-step cake builder, cart, checkout, admin login
+- Dynamic pricing engine and calculation endpoint
+- Admin dashboard for order management
+- Automated email notifications (order confirmation, admin alerts)
+- Production deployment pipeline on Railway
+
+### Future Enhancements
+- Expand cake builder to 8 steps with visual preview and advanced options
+- Specialty items catalog and multi-item cart/checkout
+- Real-time pricing updates and admin pricing management
+- Gallery with admin uploads and public display
+- Customer reviews and FAQ system
+- Automated order status notifications (email/SMS)
+- Delivery zone configuration and dynamic fee calculation
+- Wishlist, reordering, and customer favorites
+- Bulk/corporate order management
+- Inventory tracking and production planning
+- Business intelligence dashboard and reporting
+- Centralized communication system for order discussions
+- Robust connection handling, email delivery fallback, and performance optimization
+- Automated testing framework for critical flows
+
+## Logical Dependency Chain
+- **Foundation:**  
+  - Database schema → Backend server → Frontend setup
+- **Core Flows:**  
+  - Cake builder → Pricing engine → Cart/Checkout → Order creation → Email notifications
+- **Admin Tools:**  
+  - Admin login → Order management → Pricing updates
+- **Enhancements:**  
+  - Gallery, reviews, FAQ, notifications, delivery zones, wishlist, bulk orders, inventory, analytics, messaging
+- **Deployment:**  
+  - Production pipeline, monitoring, backup
+
+## Risks and Mitigations
+- **Technical Challenges:**  
+  - Complex pricing logic: Use modular, testable pricing engine and clear JSON config.
+  - Multi-item order handling: Design flexible schema and endpoints from the start.
+  - Real-time updates and scaling: Use caching, connection pooling, and monitoring.
+- **MVP Scope:**  
+  - Focus on essential flows (custom cake builder, checkout, admin order management) for initial launch.
+  - Defer advanced features (gallery, reviews, analytics) to post-MVP.
+- **Resource Constraints:**  
+  - Modularize features for parallel development.
+  - Use proven libraries and cloud services to reduce maintenance overhead.
+
+## Appendix
+- **Research:**  
+  - Compared leading bakery ordering platforms for feature set and UX.
+  - Chose Drizzle ORM for type safety and Railway for seamless deployment.
+- **Technical Specs:**  
+  - See attached task breakdown for detailed implementation steps and dependencies.
+  - All environment variables and sensitive configs managed via Railway and dotenv.
+</PRD>

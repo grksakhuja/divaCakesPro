@@ -687,6 +687,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current pricing structure (admin only)
+  app.get("/api/admin/pricing", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const session = activeSessions.get(sessionToken as string);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      
+      // Check if session is expired (24 hours)
+      if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
+        activeSessions.delete(sessionToken as string);
+        return res.status(401).json({ message: "Session expired" });
+      }
+      
+      console.log("Admin fetching pricing structure - user:", session.username);
+      
+      // Get current pricing structure
+      const pricingStructure = getPricingStructure();
+      res.json(pricingStructure);
+    } catch (error) {
+      console.error("Error fetching pricing structure:", error);
+      res.status(500).json({ message: "Failed to fetch pricing structure" });
+    }
+  });
+
+  // Update pricing structure (admin only)
+  app.put("/api/admin/pricing", express.json(), async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const session = activeSessions.get(sessionToken as string);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      
+      // Check if session is expired (24 hours)
+      if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
+        activeSessions.delete(sessionToken as string);
+        return res.status(401).json({ message: "Session expired" });
+      }
+      
+      console.log("Admin updating pricing structure - user:", session.username);
+      
+      // Validate the pricing structure
+      const newPricing = req.body;
+      if (!newPricing || typeof newPricing !== 'object') {
+        return res.status(400).json({ message: "Invalid pricing structure" });
+      }
+      
+      // Validate required fields exist
+      const requiredFields = ['basePrices', 'layerPrice', 'flavorPrices', 'icingTypes', 
+                            'decorationPrices', 'dietaryPrices', 'shapePrices'];
+      for (const field of requiredFields) {
+        if (!newPricing[field]) {
+          return res.status(400).json({ message: `Missing required field: ${field}` });
+        }
+      }
+      
+      // Validate all prices are positive numbers
+      const validatePrices = (obj: any, path: string = ''): string | null => {
+        for (const [key, value] of Object.entries(obj)) {
+          const currentPath = path ? `${path}.${key}` : key;
+          if (typeof value === 'object' && value !== null) {
+            const error = validatePrices(value, currentPath);
+            if (error) return error;
+          } else if (key !== 'name' && key !== 'description' && key !== 'image' && key !== 'category') {
+            // Skip non-price fields
+            if (typeof value !== 'number' || value < 0) {
+              return `Invalid price at ${currentPath}: must be a non-negative number`;
+            }
+          }
+        }
+        return null;
+      };
+      
+      const validationError = validatePrices(newPricing);
+      if (validationError) {
+        return res.status(400).json({ message: validationError });
+      }
+      
+      // Create backup of current pricing
+      const pricingPath = path.join(__dirname, 'server', 'pricing-structure.json');
+      const backupPath = path.join(__dirname, 'server', `pricing-backup-${Date.now()}.json`);
+      
+      try {
+        // Read current pricing for backup
+        const currentPricing = fs.readFileSync(pricingPath, 'utf-8');
+        fs.writeFileSync(backupPath, currentPricing);
+        console.log(`Created backup at: ${backupPath}`);
+        
+        // Write new pricing structure
+        fs.writeFileSync(pricingPath, JSON.stringify(newPricing, null, 2));
+        console.log("✅ Pricing structure updated successfully");
+        
+        // Log the update for audit trail
+        console.log(`Pricing updated by ${session.username} at ${new Date().toISOString()}`);
+        
+        res.json({ 
+          message: "Pricing structure updated successfully",
+          backup: backupPath
+        });
+      } catch (writeError) {
+        console.error("Error writing pricing structure:", writeError);
+        // Try to restore from backup if write failed
+        if (fs.existsSync(backupPath)) {
+          try {
+            const backup = fs.readFileSync(backupPath, 'utf-8');
+            fs.writeFileSync(pricingPath, backup);
+            console.log("Restored from backup after write failure");
+          } catch (restoreError) {
+            console.error("Failed to restore from backup:", restoreError);
+          }
+        }
+        throw writeError;
+      }
+    } catch (error) {
+      console.error("Error updating pricing structure:", error);
+      res.status(500).json({ message: "Failed to update pricing structure" });
+    }
+  });
+
+  // Get pricing history/backups (admin only)
+  app.get("/api/admin/pricing/backups", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const session = activeSessions.get(sessionToken as string);
+      if (!session) {
+        return res.status(401).json({ message: "Invalid or expired session" });
+      }
+      
+      // List all backup files
+      const serverDir = path.join(__dirname, 'server');
+      const files = fs.readdirSync(serverDir);
+      const backups = files
+        .filter(f => f.startsWith('pricing-backup-') && f.endsWith('.json'))
+        .map(f => {
+          const stats = fs.statSync(path.join(serverDir, f));
+          const timestamp = f.match(/pricing-backup-(\d+)\.json/)?.[1];
+          return {
+            filename: f,
+            timestamp: timestamp ? parseInt(timestamp) : 0,
+            date: stats.mtime,
+            size: stats.size
+          };
+        })
+        .sort((a, b) => b.timestamp - a.timestamp);
+      
+      res.json(backups);
+    } catch (error) {
+      console.error("Error fetching pricing backups:", error);
+      res.status(500).json({ message: "Failed to fetch pricing backups" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
