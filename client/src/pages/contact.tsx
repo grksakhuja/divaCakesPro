@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Phone, Mail, Clock, MessageCircle, Send, Facebook, Instagram as InstagramIcon, Twitter, Loader2, AlertCircle } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, MessageCircle, Send, Facebook, Instagram as InstagramIcon, Twitter, Loader2, AlertCircle, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { generateWhatsAppLink, WhatsAppMessages } from "@/utils/whatsapp";
 
 interface ContactContent {
   title: string;
@@ -14,6 +15,7 @@ interface ContactContent {
   description: string;
   phone: string;
   email: string;
+  whatsapp?: string;
   address: {
     line1: string;
     line2?: string;
@@ -68,6 +70,7 @@ export default function Contact() {
     description: "Have questions about our cakes or need help with your order? We're here to help!",
     phone: "+60 3-1234 5678",
     email: "info@cakecraftpro.com",
+    whatsapp: "+60123456789",
     address: {
       line1: "123 Sweet Street",
       city: "Kuala Lumpur",
@@ -161,6 +164,16 @@ export default function Contact() {
       `${content.address.city}, ${content.address.state} ${content.address.zip}`
     ].filter(Boolean);
     return parts;
+  };
+
+  // Generate WhatsApp link with predefined message
+  const getWhatsAppLink = () => {
+    if (!content.whatsapp) return null;
+    
+    return generateWhatsAppLink({
+      phoneNumber: content.whatsapp,
+      message: WhatsAppMessages.GENERAL_INQUIRY
+    });
   };
 
   return (
@@ -419,6 +432,18 @@ export default function Contact() {
                         <a href={`mailto:${content.email}`}>
                           <Mail className="h-4 w-4 mr-2" />
                           Email Us
+                        </a>
+                      </Button>
+                    )}
+                    {content.whatsapp && getWhatsAppLink() && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start bg-green-50 hover:bg-green-100 border-green-200 text-green-700 hover:text-green-800" 
+                        asChild
+                      >
+                        <a href={getWhatsAppLink()!} target="_blank" rel="noopener noreferrer">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          WhatsApp Us
                         </a>
                       </Button>
                     )}
