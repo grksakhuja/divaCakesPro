@@ -34,6 +34,17 @@
   --neutral-50: 0 0% 98%; /* #FAFAFA */
   --neutral-500: 0 0% 46%; /* #757575 */
   --neutral-900: 0 0% 20%; /* #333333 */
+  
+  /* Theme system variables - default to pink theme */
+  --theme-gradient-from: 336 84% 69%;
+  --theme-gradient-via: 276 75% 84%;
+  --theme-gradient-to: 197 71% 73%;
+  --theme-button-primary: 336 84% 69%;
+  --theme-button-secondary: 36 100% 60%;
+  --theme-link: 336 84% 69%;
+  --theme-card-from: 350 100% 95%;
+  --theme-card-to: 276 75% 95%;
+  --theme-shadow: rgba(255, 107, 157, 0.2);
 }
 
 .dark {

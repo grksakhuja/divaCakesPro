@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,17 +21,7 @@ interface GalleryImage {
   createdAt: string;
 }
 
-const CATEGORY_LABELS = {
-  general: 'General',
-  wedding: 'Wedding',
-  birthday: 'Birthday',
-  specialty: 'Specialty',
-  custom: 'Custom',
-  seasonal: 'Seasonal'
-};
-
 export default function Gallery() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Fetch all gallery images
   const { data: images = [], isLoading, error } = useQuery({
@@ -47,10 +37,8 @@ export default function Gallery() {
     }
   });
 
-  // Filter images by selected category
-  const filteredImages = selectedCategory
-    ? images.filter((image: GalleryImage) => image.category === selectedCategory)
-    : images;
+  // Use all images without filtering
+  const filteredImages = images;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -100,26 +88,6 @@ export default function Gallery() {
               Explore our curated Instagram gallery showcasing our most stunning custom cake creations. From elegant wedding cakes to playful birthday designs, let these masterpieces inspire your next sweet celebration!
             </p>
 
-            {/* Category Filter */}
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              <Button
-                variant={selectedCategory === null ? "default" : "outline"}
-                onClick={() => setSelectedCategory(null)}
-                className="mb-2"
-              >
-                All
-              </Button>
-              {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                <Button
-                  key={key}
-                  variant={selectedCategory === key ? "default" : "outline"}
-                  onClick={() => setSelectedCategory(key)}
-                  className="mb-2"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
           </div>
 
           {/* Loading State */}
@@ -154,9 +122,7 @@ export default function Gallery() {
                 No Images Found
               </h2>
               <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                {selectedCategory 
-                  ? `We don't have any ${CATEGORY_LABELS[selectedCategory as keyof typeof CATEGORY_LABELS]} cakes in our gallery yet.` 
-                  : "We're building our gallery showcase. In the meantime, start designing your perfect cake!"}
+                We're building our gallery showcase. In the meantime, start designing your perfect cake!
               </p>
               <Link to="/order">
                 <Button size="lg">

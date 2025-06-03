@@ -94,6 +94,15 @@ export const galleryImages = pgTable("gallery_images", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const pageContent = pgTable("page_content", {
+  id: serial("id").primaryKey(),
+  pageName: text("page_name").notNull().unique(),
+  content: json("content").notNull(),
+  updatedBy: text("updated_by"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export const insertCakeOrderSchema = createInsertSchema(cakeOrders).omit({
   id: true,
   orderDate: true,
@@ -115,6 +124,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPageContentSchema = createInsertSchema(pageContent).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -173,3 +188,5 @@ export type User = typeof users.$inferSelect;
 export type CheckoutOrder = z.infer<typeof checkoutOrderSchema>;
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type GalleryImage = typeof galleryImages.$inferSelect;
+export type InsertPageContent = z.infer<typeof insertPageContentSchema>;
+export type PageContent = typeof pageContent.$inferSelect;

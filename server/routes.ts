@@ -1005,6 +1005,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PAGE CONTENT ENDPOINTS
+  
+  // Get page content (public)
+  app.get("/api/page-content/:pageName", async (req, res) => {
+    try {
+      const { pageName } = req.params;
+      const content = await storage.getPageContent(pageName);
+      
+      if (!content) {
+        return res.status(404).json({ message: "Page content not found" });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching page content:", error);
+      res.status(500).json({ message: "Failed to fetch page content" });
+    }
+  });
+  
+  // Get page content (admin - with auth details)
+  app.get("/api/admin/page-content/:pageName", async (req, res) => {
+    try {
+      // Check admin authentication
+      const token = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-admin-session'] as string;
+      
+      if (!token || !activeSessions.has(token)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const { pageName } = req.params;
+      const content = await storage.getPageContent(pageName);
+      
+      // Return empty content structure if not found (for initial setup)
+      if (!content) {
+        return res.json({
+          pageName,
+          content: {},
+          updatedBy: null,
+          createdAt: null,
+          updatedAt: null
+        });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching page content:", error);
+      res.status(500).json({ message: "Failed to fetch page content" });
+    }
+  });
+  
+  // Update page content (admin only)
+  app.put("/api/admin/page-content/:pageName", express.json(), async (req, res) => {
+    try {
+      // Check admin authentication
+      const token = req.headers.authorization?.replace('Bearer ', '') || req.headers['x-admin-session'] as string;
+      
+      if (!token || !activeSessions.has(token)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const { pageName } = req.params;
+      const { content } = req.body;
+      const session = activeSessions.get(token);
+      
+      if (!content || typeof content !== 'object') {
+        return res.status(400).json({ message: "Invalid content format" });
+      }
+      
+      // Check if page content exists
+      const existing = await storage.getPageContent(pageName);
+      
+      let result;
+      if (existing) {
+        // Update existing content
+        result = await storage.updatePageContent(pageName, {
+          content,
+          updatedBy: session?.username || 'admin'
+        });
+      } else {
+        // Create new content
+        result = await storage.createPageContent({
+          pageName,
+          content,
+          updatedBy: session?.username || 'admin'
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating page content:", error);
+      res.status(500).json({ message: "Failed to update page content" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
