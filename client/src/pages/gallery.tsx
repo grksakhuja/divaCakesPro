@@ -31,7 +31,9 @@ const CATEGORY_LABELS = {
 };
 
 export default function Gallery() {
-  // Just fetch all gallery images - no filtering to avoid re-render issues
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Fetch all gallery images
   const { data: images = [], isLoading, error } = useQuery({
     queryKey: ['gallery'],
     queryFn: async () => {
@@ -45,6 +47,11 @@ export default function Gallery() {
     }
   });
 
+  // Filter images by selected category
+  const filteredImages = selectedCategory
+    ? images.filter((image: GalleryImage) => image.category === selectedCategory)
+    : images;
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -53,9 +60,9 @@ export default function Gallery() {
     });
   };
 
-  // Load Instagram embed script when images are loaded - simplified approach
+  // Load Instagram embed script when images are loaded
   useEffect(() => {
-    if (images.length === 0) return;
+    if (filteredImages.length === 0) return;
 
     // Remove any existing Instagram script to force fresh load
     const existingScript = document.querySelector('script[src*="instagram.com/embed.js"]');
@@ -63,7 +70,7 @@ export default function Gallery() {
       existingScript.remove();
     }
 
-    // Create fresh Instagram script exactly like in test HTML
+    // Create fresh Instagram script
     const script = document.createElement('script');
     script.src = 'https://www.instagram.com/embed.js';
     script.async = true;
@@ -78,7 +85,7 @@ export default function Gallery() {
         scriptToRemove.remove();
       }
     };
-  }, [images]);
+  }, [filteredImages]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -93,6 +100,26 @@ export default function Gallery() {
               Explore our curated Instagram gallery showcasing our most stunning custom cake creations. From elegant wedding cakes to playful birthday designs, let these masterpieces inspire your next sweet celebration!
             </p>
 
+            {/* Category Filter */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              <Button
+                variant={selectedCategory === null ? "default" : "outline"}
+                onClick={() => setSelectedCategory(null)}
+                className="mb-2"
+              >
+                All
+              </Button>
+              {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                <Button
+                  key={key}
+                  variant={selectedCategory === key ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(key)}
+                  className="mb-2"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* Loading State */}
@@ -120,14 +147,16 @@ export default function Gallery() {
           )}
 
           {/* Empty State */}
-          {!isLoading && !error && images.length === 0 && (
+          {!isLoading && !error && filteredImages.length === 0 && (
             <Card className="p-12 bg-white/80 backdrop-blur text-center">
               <div className="text-6xl mb-4">🎂</div>
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-                Gallery Coming Soon
+                No Images Found
               </h2>
               <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                We're building our gallery showcase. In the meantime, start designing your perfect cake!
+                {selectedCategory 
+                  ? `We don't have any ${CATEGORY_LABELS[selectedCategory as keyof typeof CATEGORY_LABELS]} cakes in our gallery yet.` 
+                  : "We're building our gallery showcase. In the meantime, start designing your perfect cake!"}
               </p>
               <Link to="/order">
                 <Button size="lg">
@@ -137,13 +166,12 @@ export default function Gallery() {
             </Card>
           )}
 
-          {/* Clean Instagram Gallery */}
-          {!isLoading && !error && images.length > 0 && (
+          {/* Instagram Gallery */}
+          {!isLoading && !error && filteredImages.length > 0 && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mb-12">
-                {images.map((image: GalleryImage) => (
+                {filteredImages.map((image: GalleryImage) => (
                   <div key={image.id} className="overflow-hidden">
-                    {/* Just the Instagram post - no frame */}
                     <div 
                       className="instagram-post-mobile"
                       style={{
