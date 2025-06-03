@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Save, AlertCircle, Phone, Mail, MapPin, Clock, Share2, FileText, Sparkles } from 'lucide-react';
+import { Loader2, Save, AlertCircle, Phone, Mail, MapPin, Clock, Share2, FileText, Sparkles, MessageSquare } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { queryClient } from '@/lib/queryClient';
 import AdminLayout from '@/components/admin/admin-layout';
@@ -18,6 +18,7 @@ interface ContactContent {
   description: string;
   phone: string;
   email: string;
+  whatsapp?: string;
   address: {
     line1: string;
     line2?: string;
@@ -46,6 +47,7 @@ export default function AdminContactContent() {
     description: '',
     phone: '',
     email: '',
+    whatsapp: '',
     address: {
       line1: '',
       line2: '',
@@ -101,6 +103,7 @@ export default function AdminContactContent() {
         description: data.content.description || '',
         phone: data.content.phone || '',
         email: data.content.email || '',
+        whatsapp: data.content.whatsapp || '',
         address: data.content.address || {
           line1: '',
           line2: '',
@@ -259,6 +262,42 @@ export default function AdminContactContent() {
                   onChange={(e) => setContent({ ...content, email: e.target.value })}
                   placeholder="info@yourbakery.com"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp Number (optional)</Label>
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  value={content.whatsapp || ''}
+                  onChange={(e) => setContent({ ...content, whatsapp: e.target.value })}
+                  placeholder="+60123456789"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Include country code (e.g., +60 for Malaysia, +1 for US)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-200 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-emerald-900">
+              <div className="bg-emerald-200 p-2 rounded-lg">
+                <MessageSquare className="w-5 h-5 text-emerald-700" />
+              </div>
+              WhatsApp Integration
+            </CardTitle>
+          </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white p-4 rounded-lg border border-emerald-100">
+                <h4 className="font-medium text-emerald-900 mb-2">How WhatsApp Integration Works</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• When customers click "WhatsApp Us", it opens WhatsApp with a pre-written message</li>
+                  <li>• The default message: "Hi! I'm interested in ordering a custom cake. Can you help me?"</li>
+                  <li>• WhatsApp number should include country code (e.g., +60123456789)</li>
+                  <li>• Leave the WhatsApp field empty to hide the WhatsApp button</li>
+                </ul>
               </div>
             </CardContent>
           </Card>
