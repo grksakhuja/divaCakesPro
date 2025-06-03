@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/lib/theme-context";
 import { Layout } from "@/components/layout/layout";
 import Home from "@/pages/home";
 import CakeBuilder from "@/pages/cake-builder";
@@ -11,6 +12,8 @@ import AdminOrders from "@/pages/admin-orders";
 import AdminLogin from "@/pages/admin-login";
 import AdminPricing from "@/pages/admin-pricing";
 import AdminGallery from "@/pages/admin-gallery";
+import AdminAboutContent from "@/pages/admin-about-content";
+import AdminContactContent from "@/pages/admin-contact-content";
 import NotFound from "@/pages/not-found";
 import Gallery from "@/pages/gallery";
 import About from "@/pages/about";
@@ -71,6 +74,8 @@ function Router() {
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/pricing" component={AdminPricing} />
       <Route path="/admin/gallery" component={AdminGallery} />
+      <Route path="/admin/about-content" component={AdminAboutContent} />
+      <Route path="/admin/contact-content" component={AdminContactContent} />
       <Route>
         <Layout>
           <NotFound />
@@ -83,10 +88,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

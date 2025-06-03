@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Trash2, Edit3, Plus, Instagram, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Trash2, Edit3, Plus, Instagram, Eye, EyeOff, ArrowLeft, Sparkles, Image, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocation } from "wouter";
+import AdminLayout from "@/components/admin/admin-layout";
 
 interface GalleryImage {
   id: number;
@@ -286,51 +287,72 @@ export default function AdminGallery() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <AdminLayout title="Gallery Management" description="Manage Instagram posts displayed in your gallery">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading gallery images...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-gray-600">
-              You need to be logged in as an admin to access this page.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null; // Will redirect in useEffect
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setLocation("/admin/orders")}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Orders
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gallery Management</h1>
-              <p className="text-gray-600 mt-2">Manage Instagram posts displayed in your gallery</p>
+    <AdminLayout title="Gallery Management" description="Manage Instagram posts displayed in your gallery">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-600 text-sm font-medium">Total Images</p>
+                <p className="text-3xl font-bold text-purple-900 mt-1">{images.length}</p>
+              </div>
+              <div className="bg-purple-200 p-3 rounded-xl">
+                <Image className="w-6 h-6 text-purple-600" />
+              </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-emerald-600 text-sm font-medium">Active Images</p>
+                <p className="text-3xl font-bold text-emerald-900 mt-1">
+                  {images.filter(img => img.isActive).length}
+                </p>
+              </div>
+              <div className="bg-emerald-200 p-3 rounded-xl">
+                <Eye className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-indigo-600 text-sm font-medium">Categories</p>
+                <p className="text-3xl font-bold text-indigo-900 mt-1">{categories.length}</p>
+              </div>
+              <div className="bg-indigo-200 p-3 rounded-xl">
+                <Sparkles className="w-6 h-6 text-indigo-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Header Actions */}
+      <div className="flex justify-end mb-6">
           
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
@@ -629,7 +651,6 @@ export default function AdminGallery() {
             </DialogContent>
           </Dialog>
         )}
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

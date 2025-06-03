@@ -51,6 +51,17 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // Theme system colors
+        theme: {
+          primary: "hsl(var(--theme-button-primary))",
+          secondary: "hsl(var(--theme-button-secondary))",
+          link: "hsl(var(--theme-link))",
+          "gradient-from": "hsl(var(--theme-gradient-from))",
+          "gradient-via": "hsl(var(--theme-gradient-via))",
+          "gradient-to": "hsl(var(--theme-gradient-to))",
+          "card-from": "hsl(var(--theme-card-from))",
+          "card-to": "hsl(var(--theme-card-to))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

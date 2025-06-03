@@ -3,10 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Palette, Leaf, Truck, Heart, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useThemeClasses } from "@/lib/theme-context";
 import { apiRequest } from "@/lib/queryClient";
 import { formatPrice } from "@/lib/format-utils";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
+  const themeClasses = useThemeClasses();
+  
   // Fetch pricing for featured cakes
   const { data: birthdayPrice } = useQuery({
     queryKey: ["/api/calculate-price", "birthday"],
@@ -45,7 +49,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-pink-100 via-pink-50 to-orange-50 py-20 md:py-32">
+      <section className={cn("relative py-20 md:py-32", themeClasses.cardGradient)}>
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -59,7 +63,7 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/order">
-                  <Button size="lg" className="bg-pink-500 hover:bg-pink-600 text-white">
+                  <Button size="lg" className={themeClasses.primaryButton}>
                     Order Your Cake
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>

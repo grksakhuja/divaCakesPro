@@ -1,4 +1,4 @@
-import { users, cakeOrders, cakeTemplates, orderItems, galleryImages, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem, type GalleryImage, type InsertGalleryImage } from "@shared/schema";
+import { users, cakeOrders, cakeTemplates, orderItems, galleryImages, pageContent, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem, type GalleryImage, type InsertGalleryImage, type PageContent, type InsertPageContent } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -27,6 +27,11 @@ export interface IStorage {
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
   updateGalleryImage(id: number, image: Partial<InsertGalleryImage>): Promise<GalleryImage | undefined>;
   deleteGalleryImage(id: number): Promise<boolean>;
+  
+  // Page content methods
+  getPageContent(pageName: string): Promise<PageContent | undefined>;
+  createPageContent(content: InsertPageContent): Promise<PageContent>;
+  updatePageContent(pageName: string, content: Partial<InsertPageContent>): Promise<PageContent | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -270,6 +275,19 @@ export class MemStorage implements IStorage {
 
   async deleteGalleryImage(id: number): Promise<boolean> {
     return this.galleryImages.delete(id);
+  }
+
+  // Page content methods (not implemented in MemStorage)
+  async getPageContent(pageName: string): Promise<PageContent | undefined> {
+    throw new Error('Page content not supported in memory storage');
+  }
+
+  async createPageContent(content: InsertPageContent): Promise<PageContent> {
+    throw new Error('Page content not supported in memory storage');
+  }
+
+  async updatePageContent(pageName: string, content: Partial<InsertPageContent>): Promise<PageContent | undefined> {
+    throw new Error('Page content not supported in memory storage');
   }
 }
 
@@ -522,6 +540,42 @@ export class DatabaseStorage implements IStorage {
   async deleteGalleryImage(id: number): Promise<boolean> {
     const result = await db.delete(galleryImages).where(eq(galleryImages.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  // Page content methods
+  async getPageContent(pageName: string): Promise<PageContent | undefined> {
+    const [content] = await db
+      .select()
+      .from(pageContent)
+      .where(eq(pageContent.pageName, pageName));
+    return content || undefined;
+  }
+
+  async createPageContent(insertContent: InsertPageContent): Promise<PageContent> {
+    const now = new Date().toISOString();
+    const contentData = {
+      ...insertContent,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    const [content] = await db
+      .insert(pageContent)
+      .values(contentData)
+      .returning();
+    return content;
+  }
+
+  async updatePageContent(pageName: string, updateData: Partial<InsertPageContent>): Promise<PageContent | undefined> {
+    const [content] = await db
+      .update(pageContent)
+      .set({
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(pageContent.pageName, pageName))
+      .returning();
+    return content || undefined;
   }
 }
 

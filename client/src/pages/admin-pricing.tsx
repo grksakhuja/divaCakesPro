@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Save, RotateCcw, History } from "lucide-react";
+import { Save, RotateCcw, History, DollarSign, Cake, ShoppingBag, Sparkles, Palette, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/format-utils";
 import { queryClient } from "@/lib/queryClient";
+import AdminLayout from "@/components/admin/admin-layout";
 
 export default function AdminPricing() {
   const { isAuthenticated, isLoading, sessionToken } = useAdminAuth();
@@ -136,14 +137,23 @@ export default function AdminPricing() {
   };
 
   if (isLoading || !pricingData) {
-    return <div className="container mx-auto p-8">Loading...</div>;
+    return (
+      <AdminLayout title="Pricing Management" description="Update your cake prices">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading pricing data...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
   }
 
   const renderPriceInput = (label: string, path: string[], helperText?: string) => (
     <div className="space-y-2">
-      <Label htmlFor={path.join('-')}>{label}</Label>
+      <Label htmlFor={path.join('-')} className="text-sm font-medium text-gray-700">{label}</Label>
       <div className="flex items-center space-x-2">
-        <span className="text-sm text-muted-foreground">RM</span>
+        <div className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm font-medium">RM</div>
         <Input
           id={path.join('-')}
           type="number"
@@ -151,22 +161,22 @@ export default function AdminPricing() {
           min="0"
           value={(path.reduce((obj, key) => obj[key], pricingData) / 100).toFixed(2)}
           onChange={(e) => handlePriceChange(path, e.target.value)}
-          className="max-w-[150px]"
+          className="max-w-[150px] border-gray-300 focus:border-pink-400 focus:ring-pink-400"
         />
       </div>
-      {helperText && <p className="text-sm text-muted-foreground">{helperText}</p>}
+      {helperText && <p className="text-sm text-gray-500 italic">{helperText}</p>}
     </div>
   );
 
   const renderSpecialtyItem = (key: string, item: any, category: string) => (
-    <Card key={key} className="p-4">
+    <Card key={key} className="p-4 hover:shadow-lg transition-shadow bg-gradient-to-br from-white to-pink-50 border-pink-100">
       <div className="space-y-4">
-        <h4 className="font-medium">{item.name}</h4>
+        <h4 className="font-semibold text-lg text-gray-800">{item.name}</h4>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Price</Label>
+            <Label className="text-sm font-medium text-gray-700">Price</Label>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">RM</span>
+              <div className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm font-medium">RM</div>
               <Input
                 type="number"
                 step="0.01"
@@ -179,51 +189,58 @@ export default function AdminPricing() {
                   setPricingData(newData);
                   setHasChanges(JSON.stringify(newData) !== JSON.stringify(originalData));
                 }}
-                className="max-w-[150px]"
+                className="max-w-[150px] border-gray-300 focus:border-pink-400 focus:ring-pink-400"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
-            <Input value={item.category} disabled className="max-w-[150px]" />
+            <Label className="text-sm font-medium text-gray-700">Category</Label>
+            <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm font-medium inline-block">
+              {item.category}
+            </div>
           </div>
         </div>
         <div className="space-y-2">
-          <Label>Description</Label>
-          <p className="text-sm text-muted-foreground">{item.description}</p>
+          <Label className="text-sm font-medium text-gray-700">Description</Label>
+          <p className="text-sm text-gray-600 bg-white/50 p-2 rounded">{item.description}</p>
         </div>
       </div>
     </Card>
   );
 
   return (
-    <div className="container mx-auto p-8 max-w-6xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Pricing Management</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setLocation("/admin/orders")}
-          >
-            Back to Orders
-          </Button>
-          {hasChanges && (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                disabled={isSaving}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Reset Changes
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button disabled={isSaving}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
+    <AdminLayout title="Pricing Management" description="Update your cake prices and specialty items">
+      <div className="mb-8">
+        {hasChanges && (
+          <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-yellow-600" />
+                  <p className="text-sm font-medium text-yellow-800">You have unsaved changes</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleReset}
+                    disabled={isSaving}
+                    className="border-yellow-300 hover:bg-yellow-100"
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reset Changes
                   </Button>
-                </AlertDialogTrigger>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        disabled={isSaving}
+                        size="sm"
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </Button>
+                    </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirm Price Update</AlertDialogTitle>
@@ -239,23 +256,42 @@ export default function AdminPricing() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </>
-          )}
-        </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <Tabs defaultValue="custom-cakes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="custom-cakes">Custom Cakes</TabsTrigger>
-          <TabsTrigger value="specialty-items">Specialty Items</TabsTrigger>
-          <TabsTrigger value="extras">Extras & Add-ons</TabsTrigger>
-          <TabsTrigger value="backups">Backup History</TabsTrigger>
+      <Tabs defaultValue="custom-cakes" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-pink-100 to-purple-100 p-1 rounded-lg">
+          <TabsTrigger value="custom-cakes" className="data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2">
+            <Cake className="w-4 h-4" />
+            Custom Cakes
+          </TabsTrigger>
+          <TabsTrigger value="specialty-items" className="data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4" />
+            Specialty Items
+          </TabsTrigger>
+          <TabsTrigger value="extras" className="data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Extras & Add-ons
+          </TabsTrigger>
+          <TabsTrigger value="backups" className="data-[state=active]:bg-white data-[state=active]:shadow-sm flex items-center gap-2">
+            <History className="w-4 h-4" />
+            Backup History
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="custom-cakes" className="space-y-6">
-          <Card>
+          <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200">
             <CardHeader>
-              <CardTitle>Base Cake Prices</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <div className="bg-pink-200 p-1 rounded">
+                  <DollarSign className="w-5 h-5 text-pink-700" />
+                </div>
+                Base Cake Prices
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-6">
               {renderPriceInput("6-inch Cake", ["basePrices", "6inch"], "Base price for 6-inch cakes")}
@@ -264,23 +300,28 @@ export default function AdminPricing() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-200">
             <CardHeader>
-              <CardTitle>Flavor Upcharges</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <div className="bg-orange-200 p-1 rounded">
+                  <Cake className="w-5 h-5 text-orange-700" />
+                </div>
+                Flavor Upcharges
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-6">
               {Object.entries(pricingData.flavorPrices).map(([key, value]) => (
                 <div key={key} className="space-y-2">
-                  <Label>{key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Label>
+                  <Label className="text-sm font-medium text-gray-700">{key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</Label>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">RM</span>
+                    <div className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm font-medium">RM</div>
                     <Input
                       type="number"
                       step="0.01"
                       min="0"
                       value={((value as number) / 100).toFixed(2)}
                       onChange={(e) => handlePriceChange(["flavorPrices", key], e.target.value)}
-                      className="max-w-[150px]"
+                      className="max-w-[150px] border-gray-300 focus:border-orange-400 focus:ring-orange-400"
                     />
                   </div>
                 </div>
@@ -485,6 +526,6 @@ export default function AdminPricing() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminLayout>
   );
 }
