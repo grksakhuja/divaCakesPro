@@ -38,4 +38,8 @@ node_modules/
 
 # Task files
 tasks.json
-tasks/ 
+tasks/
+
+# uploads
+public/uploads/gallery/*
+!public/uploads/gallery/.gitkeep 

@@ -862,6 +862,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GALLERY ADMIN APIs - Instagram Integration
+  
+  // Import Instagram service
+  const { instagramService } = await import('./instagram-service');
+  
+  // Get all gallery images (admin only)
+  app.get("/api/admin/gallery", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken || !activeSessions.has(sessionToken as string)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const images = await storage.getGalleryImages(false); // Get all, including inactive
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching gallery images:", error);
+      res.status(500).json({ message: "Failed to fetch gallery images" });
+    }
+  });
+  
+  // Add Instagram post (admin only)
+  app.post("/api/admin/gallery/add", express.json(), async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken || !activeSessions.has(sessionToken as string)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const { instagramUrl, title, description, category, tags } = req.body;
+      
+      if (!instagramUrl || !title) {
+        return res.status(400).json({ message: "Instagram URL and title are required" });
+      }
+      
+      // Fetch Instagram embed data
+      const embedData = await instagramService.fetchInstagramEmbed(instagramUrl);
+      
+      // Create gallery image record
+      const image = await storage.createGalleryImage({
+        instagramUrl: instagramService.normalizeInstagramUrl(instagramUrl),
+        embedHtml: embedData.html,
+        thumbnailUrl: embedData.thumbnail_url || '',
+        caption: embedData.title || '',
+        title,
+        description: description || '',
+        category: category || 'general',
+        tags: tags || [],
+        sortOrder: 0,
+        isActive: true,
+        uploadedBy: 'admin',
+        fetchedAt: new Date().toISOString(),
+      });
+      
+      res.json(image);
+    } catch (error: any) {
+      console.error("Error adding Instagram post:", error);
+      res.status(500).json({ message: error.message || "Failed to add Instagram post" });
+    }
+  });
+  
+  // Update gallery image (admin only)
+  app.put("/api/admin/gallery/:id", express.json(), async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken || !activeSessions.has(sessionToken as string)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Don't allow changing the Instagram URL
+      delete updates.instagramUrl;
+      delete updates.id;
+      
+      const image = await storage.updateGalleryImage(id, updates);
+      if (!image) {
+        return res.status(404).json({ message: "Gallery image not found" });
+      }
+      
+      res.json(image);
+    } catch (error) {
+      console.error("Error updating gallery image:", error);
+      res.status(500).json({ message: "Failed to update gallery image" });
+    }
+  });
+  
+  // Delete gallery image (admin only)
+  app.delete("/api/admin/gallery/:id", async (req, res) => {
+    try {
+      // Check authentication
+      const authHeader = req.headers.authorization;
+      const sessionToken = authHeader?.replace('Bearer ', '') || req.headers['x-admin-session'];
+      
+      if (!sessionToken || !activeSessions.has(sessionToken as string)) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteGalleryImage(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Gallery image not found" });
+      }
+      
+      res.json({ message: "Gallery image deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting gallery image:", error);
+      res.status(500).json({ message: "Failed to delete gallery image" });
+    }
+  });
+  
+  // PUBLIC GALLERY API
+  
+  // Get active gallery images (public)
+  app.get("/api/gallery", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      
+      let images;
+      if (category) {
+        images = await storage.getGalleryImagesByCategory(category);
+      } else {
+        images = await storage.getGalleryImages(true); // Active only
+      }
+      
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching gallery images:", error);
+      res.status(500).json({ message: "Failed to fetch gallery images" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

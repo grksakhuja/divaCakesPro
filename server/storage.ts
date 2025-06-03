@@ -1,4 +1,4 @@
-import { users, cakeOrders, cakeTemplates, orderItems, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem } from "@shared/schema";
+import { users, cakeOrders, cakeTemplates, orderItems, galleryImages, type User, type InsertUser, type CakeOrder, type InsertCakeOrder, type CakeTemplate, type InsertCakeTemplate, type OrderItem, type InsertOrderItem, type GalleryImage, type InsertGalleryImage } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -19,23 +19,35 @@ export interface IStorage {
   getCakeTemplates(): Promise<CakeTemplate[]>;
   getCakeTemplatesByCategory(category: string): Promise<CakeTemplate[]>;
   createCakeTemplate(template: InsertCakeTemplate): Promise<CakeTemplate>;
+  
+  // Gallery image methods
+  getGalleryImages(activeOnly?: boolean): Promise<GalleryImage[]>;
+  getGalleryImagesByCategory(category: string): Promise<GalleryImage[]>;
+  getGalleryImage(id: number): Promise<GalleryImage | undefined>;
+  createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
+  updateGalleryImage(id: number, image: Partial<InsertGalleryImage>): Promise<GalleryImage | undefined>;
+  deleteGalleryImage(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private cakeOrders: Map<number, CakeOrder>;
   private cakeTemplates: Map<number, CakeTemplate>;
+  private galleryImages: Map<number, GalleryImage>;
   private currentUserId: number;
   private currentOrderId: number;
   private currentTemplateId: number;
+  private currentImageId: number;
 
   constructor() {
     this.users = new Map();
     this.cakeOrders = new Map();
     this.cakeTemplates = new Map();
+    this.galleryImages = new Map();
     this.currentUserId = 1;
     this.currentOrderId = 1;
     this.currentTemplateId = 1;
+    this.currentImageId = 1;
     
     // Initialize with some default templates
     this.initializeTemplates();
@@ -209,6 +221,55 @@ export class MemStorage implements IStorage {
     const template: CakeTemplate = { ...insertTemplate, id };
     this.cakeTemplates.set(id, template);
     return template;
+  }
+
+  // Gallery image methods
+  async getGalleryImages(activeOnly: boolean = true): Promise<GalleryImage[]> {
+    const images = Array.from(this.galleryImages.values());
+    if (activeOnly) {
+      return images.filter(img => img.isActive);
+    }
+    return images.sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getGalleryImagesByCategory(category: string): Promise<GalleryImage[]> {
+    return Array.from(this.galleryImages.values())
+      .filter(img => img.category === category && img.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getGalleryImage(id: number): Promise<GalleryImage | undefined> {
+    return this.galleryImages.get(id);
+  }
+
+  async createGalleryImage(insertImage: InsertGalleryImage): Promise<GalleryImage> {
+    const id = this.currentImageId++;
+    const now = new Date().toISOString();
+    const image: GalleryImage = {
+      ...insertImage,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.galleryImages.set(id, image);
+    return image;
+  }
+
+  async updateGalleryImage(id: number, updateData: Partial<InsertGalleryImage>): Promise<GalleryImage | undefined> {
+    const image = this.galleryImages.get(id);
+    if (!image) return undefined;
+    
+    const updatedImage: GalleryImage = {
+      ...image,
+      ...updateData,
+      updatedAt: new Date().toISOString(),
+    };
+    this.galleryImages.set(id, updatedImage);
+    return updatedImage;
+  }
+
+  async deleteGalleryImage(id: number): Promise<boolean> {
+    return this.galleryImages.delete(id);
   }
 }
 
@@ -398,6 +459,69 @@ export class DatabaseStorage implements IStorage {
       .values(orderItemData)
       .returning();
     return orderItem;
+  }
+
+  // Gallery image methods
+  async getGalleryImages(activeOnly: boolean = true): Promise<GalleryImage[]> {
+    if (activeOnly) {
+      return await db
+        .select()
+        .from(galleryImages)
+        .where(eq(galleryImages.isActive, true))
+        .orderBy(galleryImages.sortOrder, galleryImages.createdAt);
+    }
+    return await db
+      .select()
+      .from(galleryImages)
+      .orderBy(galleryImages.sortOrder, galleryImages.createdAt);
+  }
+
+  async getGalleryImagesByCategory(category: string): Promise<GalleryImage[]> {
+    return await db
+      .select()
+      .from(galleryImages)
+      .where(eq(galleryImages.category, category))
+      .orderBy(galleryImages.sortOrder, galleryImages.createdAt);
+  }
+
+  async getGalleryImage(id: number): Promise<GalleryImage | undefined> {
+    const [image] = await db
+      .select()
+      .from(galleryImages)
+      .where(eq(galleryImages.id, id));
+    return image || undefined;
+  }
+
+  async createGalleryImage(insertImage: InsertGalleryImage): Promise<GalleryImage> {
+    const now = new Date().toISOString();
+    const imageData = {
+      ...insertImage,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    const [image] = await db
+      .insert(galleryImages)
+      .values(imageData)
+      .returning();
+    return image;
+  }
+
+  async updateGalleryImage(id: number, updateData: Partial<InsertGalleryImage>): Promise<GalleryImage | undefined> {
+    const [image] = await db
+      .update(galleryImages)
+      .set({
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(galleryImages.id, id))
+      .returning();
+    return image || undefined;
+  }
+
+  async deleteGalleryImage(id: number): Promise<boolean> {
+    const result = await db.delete(galleryImages).where(eq(galleryImages.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 
